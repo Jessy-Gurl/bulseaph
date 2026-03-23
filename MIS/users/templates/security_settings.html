@@ -1,0 +1,120 @@
+{% extends "dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Security Settings{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/security_settings.css' %}">
+<div class="settings-container">
+    <!-- Back Button -->
+    <div class="settings-header">
+        <h1>Security Settings</h1>
+    </div>
+    
+    <div class="security-container">
+
+        <!-- Display Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {% if message.tags %}message-{{ message.tags }}{% endif %}">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% else %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button class="close-message" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Security Form -->
+        <div class="security-form-container">
+            <form method="POST" class="security-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="current_password" name="current_password" required>
+                        <button type="button" class="toggle-password" data-target="current_password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint">Enter your current password to verify your identity</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="new_password" name="new_password" required>
+                        <button type="button" class="toggle-password" data-target="new_password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint">Password must be at least 8 characters long</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" required>
+                        <button type="button" class="toggle-password" data-target="confirm_password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint">Re-enter your new password to confirm</small>
+                </div>
+
+                <!-- Password Requirements -->
+                <div class="password-requirements">
+                    <h4>Password Requirements:</h4>
+                    <ul>
+                        <li>At least 8 characters long</li>
+                        <li>Contains at least one uppercase letter</li>
+                        <li>Contains at least one lowercase letter</li>
+                        <li>Contains at least one number</li>
+                        <li>Contains at least one special character</li>
+                    </ul>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'settings' %}" class="cancel-btn">Cancel</a>
+                    <button type="submit" class="save-btn">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Password Toggle Functionality
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify OTP</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/verify_otp.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <main class="card">
+        <header class="header">
+            <h1>Verify OTP</h1>
+        </header>
+        
+        <div class="content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- OTP Info Box -->
+            <div class="otp-info">
+                Enter the 6-digit code sent to your email
+            </div>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>OTP Code</label>
+                    <div class="otp-input-wrapper">
+                        <input type="text" name="otp" required maxlength="6" 
+                               pattern="\d{6}" inputmode="numeric" autocomplete="one-time-code"
+                               placeholder="123456">
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Verify OTP</button>
+            </form>
+        </div>
+        
+        <div class="links">
+            <a href="{% url 'forgot_password' %}">Resend OTP</a>
+            <a href="{% url 'login' %}">Back to Login</a>
+        </div>
+    </main>
+</body>
+</html>

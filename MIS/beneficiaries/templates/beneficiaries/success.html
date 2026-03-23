@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Submitted</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f2f4f7; /* light gov neutral */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .container {
+        background: #fff;
+        padding: 2.5rem 3rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 6px solid #2b6cb0; /* gov blue accent */
+        animation: fadeIn 0.4s ease;
+    }
+
+    /* Check Icon */
+    .check-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #d4edda; /* light success bg */
+        color: #155724;      /* success green */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 45px;
+        margin: 0 auto 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        animation: pop 0.4s ease;
+    }
+
+    h1 {
+        font-size: 1.9rem;
+        margin-bottom: 0.5rem;
+        color: #2b6cb0; /* gov blue */
+        font-weight: 700;
+    }
+
+    p {
+        color: #555;
+        line-height: 1.5;
+        margin-bottom: 1.8rem;
+        font-size: 0.95rem;
+    }
+
+    /* Button */
+    .btn {
+        display: inline-block;
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.6rem 1.8rem;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+        background: #1e4e8c;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+        0% { transform: scale(0.6); }
+        100% { transform: scale(1); }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="check-icon">✓</div>
+
+    <h1>Application Submitted</h1>
+
+    <p>
+    <strong>Your application has been successfully submitted.</strong><br><br>
+
+    Our team will review the information you provided.
+    Once your application has been <strong>approved</strong>,
+    you will receive an official notification via <strong>email</strong>.<br><br>
+
+    Please make sure to regularly check your <strong>Email Inbox</strong>
+    and also your <strong>Spam or Junk folder</strong>
+    to avoid missing important updates regarding your application.<br><br>
+
+    Thank you for your cooperation and patience.
+</p>
+
+<hr>
+
+<p style="font-size: 0.9em; color: #555;">
+    <strong>Data Privacy Notice:</strong><br>
+    In accordance with the Data Privacy Act of 2012 (Republic Act No. 10173),
+    all personal information collected through this application will be handled
+    with strict confidentiality and will be used solely for the purpose of
+    processing and evaluating your application. Any unauthorized access,
+    disclosure, or misuse of personal data is strictly prohibited.
+</p>
+
+
+    <a href="{% url 'homepage' %}" class="btn">Go to Home</a>
+
+</div>
+
+</body>
+</html>

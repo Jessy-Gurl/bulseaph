@@ -1,0 +1,169 @@
+{% extends 'homepage_base.html' %}
+
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSWDO - SEA OFFICIAL</title>
+    <link rel="stylesheet" href="{% static 'css/landingpage.css' %}">
+    <style>
+        /* 🔥 PERFECT SPACING FOR EDITOR CONTENT */
+        .section-content p,
+        .mensahe-text p,
+        .achievement-list li,
+        .department-message p {
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+        
+        .section-content p:last-child,
+        .mensahe-text p:last-child,
+        .department-message p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Department Head Message styling */
+        .department-message {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%);
+            border-left: 4px solid #004080;
+            padding: 2rem;
+            border-radius: 0 12px 12px 0;
+            margin: 2rem 0;
+            font-style: italic;
+        }
+        
+        .department-message .dept-head-signature {
+            font-weight: 600;
+            color: #004080;
+            margin-top: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        /* Preserve double line breaks */
+        .section-content br + br,
+        .mensahe-text br + br,
+        .department-message br + br {
+            display: block;
+            content: '';
+            height: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    {% for section in homepage_contents %}
+        {% if section.section_name == 'mensahe_ng_pinuno' %}
+            <!-- 1. MENSAHE NG PINUNO NG PSWDO -->
+            <section class="section mensahe-section">
+                <div class="container">
+                    
+                    <!-- REPLACE your mensahe-content div with this -->
+<div class="mensahe-wrapper">
+  <!-- IMAGE FULL WIDTH ON TOP -->
+  <div class="pinuno-image-full">
+    {% if section.image %}
+      <img src="{{ section.image.url }}" alt="Pinuno ng PSWDO" class="mensahe-image">
+    {% else %}
+      <img src="{% static 'images/placeholder.jpg' %}" alt="Pinuno ng PSWDO" class="mensahe-image">
+    {% endif %}
+  </div>
+  
+  <!-- TEXT BELOW -->
+  <div class="mensahe-text">
+    <h2 class="section-title">{{ section.title }}</h2>
+    <div class="content-preserve">{{ section.content }}</div>
+  </div>
+</div>
+
+                    <!-- 🔥 DEPARTMENT HEAD MESSAGE - UNDER PINUNO -->
+                    {% if section.section_name == 'mensahe_ng_pinuno' %}
+                        {% for dept_section in homepage_contents %}
+                            {% if dept_section.section_name == 'department_head' %}
+                                <div class="department-message">
+                                    <div class="dept-head-content">
+                                        {{ dept_section.content|safe }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </section>
+        {% elif section.section_name == 'vision' %}
+            <!-- 3. VISION -->
+            <section class="section">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <div class="section-content">
+                        {{ section.content|linebreaks }}
+                    </div>
+                </div>
+            </section>
+        {% elif section.section_name == 'mission' %}
+            <!-- 4. MISSION -->
+            <section class="section">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <div class="section-content">
+                        {{ section.content|linebreaks }}
+                    </div>
+                </div>
+            </section>
+        {% elif section.section_name == 'mandates' %}
+            <!-- 5. MANDATES -->
+            <section class="section mandates-functions">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <div class="section-content">
+                        {{ section.content|linebreaks }}
+                    </div>
+                </div>
+            </section>
+        {% elif section.section_name == 'functions' %}
+            <!-- 6. FUNCTIONS -->
+            <section class="section">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <div class="section-content">
+                        {{ section.content|linebreaks }}
+                    </div>
+                </div>
+            </section>
+        {% elif section.section_name == 'programs_and_services' %}
+            <!-- 7. PROGRAMS AND SERVICES -->
+            <section class="section">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <div class="achievement-list">
+                        {{ section.content|linebreaks }}
+                    </div>
+                </div>
+            </section>
+        {% elif section.section_name == 'achievements' %}
+            <!-- 8. ACHIEVEMENTS -->
+            <section class="section achievements-section">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <ul class="achievement-list">
+                        {{ section.content|linebreaks }}
+                    </ul>
+                </div>
+            </section>
+        {% elif section.section_name == 'contact_information' %}
+            <!-- 9. CONTACT INFORMATION -->
+            <section class="section contact-section">
+                <div class="container">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <div class="section-content">
+                        {{ section.content|linebreaks }}
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+    {% endfor %}
+
+</body>
+</html>
+{% endblock %}

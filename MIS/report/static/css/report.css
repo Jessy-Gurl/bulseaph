@@ -1,0 +1,351 @@
+/* ========================================
+   GOVERNMENT REPORT DASHBOARD
+   Philippine Government Colors
+   ======================================== */
+
+/* Official Colors */
+:root {
+    --primary-blue: #003087;
+    /* Philippine Blue */
+    --secondary-gold: #FCD34D;
+    /* Gold/Yellow */
+    --accent-red: #DC2626;
+    /* Red */
+    --neutral-gray: #374151;
+    /* Dark Gray */
+    --light-gray: #F3F4F6;
+    /* Light Gray */
+    --white: #FFFFFF;
+    --success-green: #059669;
+    /* Success */
+    --danger-red: #DC2626;
+    /* Danger */
+}
+
+/* Container */
+.report-container {
+    max-width: 1400px;
+    margin: 0 auto 20px;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.report-header {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #1e3a8a 100%);
+    color: var(--white);
+    padding: 30px 25px;
+    text-align: center;
+}
+
+.report-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.report-header p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Filters */
+.report-filters {
+    padding: 25px;
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: var(--neutral-gray);
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 12px 14px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--white);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.1);
+}
+
+/* Government Buttons */
+.btn {
+    padding: 12px 20px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    position: relative;
+}
+
+.btn-primary {
+    background: var(--primary-blue);
+    color: var(--white);
+    border-color: var(--primary-blue);
+    box-shadow: 0 2px 8px rgba(0, 48, 135, 0.3);
+}
+
+.btn-primary:hover {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 48, 135, 0.4);
+}
+
+.btn-primary.active {
+    background: #1e3a8a;
+    border-color: #1e40af;
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.3);
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--neutral-gray);
+    border-color: #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #f3f4f6;
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    transform: translateY(-1px);
+}
+
+.period-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.period-btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Content */
+.report-content {
+    padding: 30px 25px;
+}
+
+/* Stats Cards - Government Style */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 35px;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 25px 20px;
+    border-radius: 12px;
+    border: 2px solid #f3f4f6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-blue), #1e3a8a);
+}
+
+.stat-card:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 8px 25px rgba(0, 48, 135, 0.15);
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: var(--neutral-gray);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.stat-label small {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.net-cashflow .stat-value {
+    color: var(--success-green);
+}
+
+.net-cashflow.negative .stat-value {
+    color: var(--danger-red);
+}
+
+/* Chart */
+.chart-container {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 35px;
+    border: 2px solid #f3f4f6;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.chart-container h3 {
+    margin: 0 0 25px 0;
+    color: var(--neutral-gray);
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-bottom: 2px solid #f3f4f6;
+    padding-bottom: 12px;
+}
+
+/* Table */
+.table-container {
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.table-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--neutral-gray);
+    border-bottom: 2px solid #e5e7eb;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 18px 20px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+th {
+    background: #f8fafc;
+    font-weight: 700;
+    color: var(--neutral-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-size: 0.8rem;
+}
+
+tr:hover {
+    background: #f8fafc;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .report-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .period-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    th,
+    td {
+        padding: 14px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-content {
+        padding: 20px 15px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+
+    .btn {
+        padding: 12px 16px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .report-container {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+
+    .btn {
+        display: none;
+    }
+}

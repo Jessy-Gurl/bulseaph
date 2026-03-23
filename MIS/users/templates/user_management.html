@@ -1,0 +1,445 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block title %}User Management{% endblock %}
+{% block content %}
+    <link rel="stylesheet" href="{% load static %}{% static 'css/user_management.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header-card">
+            {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                    <span class="message-text">{{ message }}</span>
+                    <button type="button" class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 class="header-title">User Management</h1>
+                    <p class="header-subtitle">Manage personnel and admin accounts</p>
+                </div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                   <a href="#" class="btn btn-primary" onclick="openAddUserModal()">
+                         <i class="fas fa-plus"></i> Add User
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid - FIXED: No extra closing div -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div style="display: flex; align-items: center;">
+                    <div class="stat-icon stat-navy"><i class="fas fa-users"></i></div>
+                    <div>
+                        <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Total Users</p>
+                        <p class="stat-number">{{ stats.total }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div style="display: flex; align-items: center;">
+                    <div class="stat-icon stat-green"><i class="fas fa-user-check"></i></div>
+                    <div>
+                        <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Active/Online</p>
+                        <p class="stat-number">{{ stats.active }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div style="display: flex; align-items: center;">
+                    <div class="stat-icon stat-dark"><i class="fas fa-user-times"></i></div>
+                    <div>
+                        <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Inactive/Offline</p>
+                        <p class="stat-number">{{ stats.inactive }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div style="display: flex; align-items: center;">
+                    <div class="stat-icon stat-gold"><i class="fas fa-user-clock"></i></div>
+                    <div>
+                        <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Never Active</p>
+                        <p class="stat-number">{{ stats.never_active }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters - FIXED: Auto-submit on change -->
+        <div class="filters-card">
+            <form method="GET" id="filterForm">
+                <div class="filter-group">
+                    <select name="position" class="select" onchange="submitForm()">
+                        <option value="">All Positions</option>
+                        <option value="Admin" {% if position_filter == 'Admin' %}selected{% endif %}>Admin</option>
+                        <option value="Personnel" {% if position_filter == 'Personnel' %}selected{% endif %}>Personnel</option>
+                    </select>
+                    
+                    <select name="status" class="select" onchange="submitForm()">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="never" {% if status_filter == 'never' %}selected{% endif %}>Never Active</option>
+                    </select>
+                    
+                    <input type="text" name="search" class="search-input" 
+                           value="{{ search_query|default:'' }}" placeholder="Search users..." 
+                           onkeyup="if(event.key==='Enter') submitForm()">
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-left: auto;">
+                        <span class="pagination-info">
+                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} results
+                        </span>
+                        <div class="pagination">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1{% if position_filter %}&position={{ position_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="page-btn">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            {% endif %}
+                            {% if page_obj.has_previous %}
+                                <a href="?page={{ page_obj.previous_page_number }}{% if position_filter %}&position={{ position_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="page-btn">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <span class="page-btn active">{{ num }}</span>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?page={{ num }}{% if position_filter %}&position={{ position_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="page-btn">{{ num }}</a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% if position_filter %}&position={{ position_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}" class="page-btn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Number</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                        <th>Activities</th>
+                        <th style="text-align: right;">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in page_obj %}
+                    <tr>
+                        <td><span style="font-weight: 500;">{{ user.id_number }}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <div class="user-avatar {% if user.position == 'Admin' %}avatar-blue{% else %}avatar-green{% endif %}">
+                                    {{ user.fullname|slice:":2"|upper }}
+                                </div>
+                                <span style="font-weight: 500;">{{ user.fullname }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.number }}</td>
+                        <td>
+                            <span class="position-badge {% if user.position == 'Admin' %}position-admin{% else %}position-personnel{% endif %}">
+                                {{ user.position }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if 'Active Now' in user.activity_status %}
+                                <span class="status-badge status-active">{{ user.activity_status }}</span>
+                            {% elif 'Never Active' in user.activity_status %}
+                                <span class="status-badge status-inactive">{{ user.activity_status }}</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">{{ user.activity_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- ✅ UPDATED - Same CSS class, new onclick -->
+<button class="action-btn action-view" 
+        onclick="window.location.href='{% url 'user_activities' user.id_number %}'"
+        title="View Activities">
+    <i class="fas fa-list"></i> View
+</button>
+                        </td>
+                        <!-- Replace the Delete column in your table -->
+<td style="text-align: right;">
+    {% if user.id_number != request.user.id_number %}
+        <button class="action-btn action-delete" 
+                onclick="showDeleteModal('{{ user.id_number }}', '{{ user.fullname }}')"
+                title="Delete User">
+            <i class="fas fa-trash"></i>
+        </button>
+    {% else %}
+        <i class="fas fa-lock no-delete" title="Cannot delete yourself"></i>
+    {% endif %}
+</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 4rem; color: #64748b; font-style: italic;">
+                            No users found matching your filters
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add User Modal -->
+<div id="addUserModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <form id="addUserForm" method="POST" action="{% url 'add_user' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>ID Number <span style="color: red;">*</span></label>
+                    <input type="text" name="id_number" required maxlength="20" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label>Full Name <span style="color: red;">*</span></label>
+                    <input type="text" name="fullname" required class="form-control">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email <span style="color: red;">*</span></label>
+                        <input type="email" name="email" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" name="number" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Position <span style="color: red;">*</span></label>
+                        <select name="position" required class="form-control">
+                            <option value="">Select Position</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Personnel">Personnel</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+    <label>Default Password</label>
+    <input type="text" id="defaultPassword" readonly 
+           class="form-control" 
+           placeholder="Select position to see password...">
+    <small class="form-help">Admin: <code>@Admin01</code> | Personnel: <code>@Personnel01</code></small>
+</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal" style="display: none;">
+    <div class="modal-content delete-modal">
+        <div class="modal-header">
+            <h2><i class="fas fa-exclamation-triangle text-warning"></i> Confirm Delete</h2>
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="delete-warning">
+                <i class="fas fa-skull-crossbones warning-icon"></i>
+                <h3>This action cannot be undone!</h3>
+                <p>Are you sure you want to delete:</p>
+                <div class="delete-user-info">
+                    <strong id="deleteUserName">-</strong>
+                    <br><small id="deleteUserId">-</small>
+                </div>
+                <div class="warning-text">
+                    All user data will be permanently removed.
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="performDelete()">
+                <i class="fas fa-trash"></i> Yes, Delete Permanently
+            </button>
+        </div>
+    </div>
+</div>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ===== FILTERS =====
+    window.submitForm = function() {
+        document.getElementById('filterForm')?.submit();
+    };
+    
+    // ===== MODAL FUNCTIONS =====
+    window.openAddUserModal = function() {
+        const modal = document.getElementById('addUserModal');
+        const form = document.getElementById('addUserForm');
+        const passwordField = document.getElementById('defaultPassword');
+        
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // ✅ FULL RESET - Clear everything
+        form.reset();
+        passwordField.value = '';
+        passwordField.className = 'form-control'; // Reset classes
+        passwordField.style.backgroundColor = '';
+        passwordField.style.color = '';
+        passwordField.style.fontWeight = '';
+    };
+    
+    window.closeModal = function() {
+        const modal = document.getElementById('addUserModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+    
+    // ===== PASSWORD GENERATION - BULLETPROOF =====
+    const positionSelect = document.querySelector('#addUserForm select[name="position"]');
+    const passwordField = document.getElementById('defaultPassword');
+    
+    if (positionSelect && passwordField) {
+        positionSelect.addEventListener('change', function() {
+            // ✅ FORCE CLEAR first
+            passwordField.value = '';
+            passwordField.className = 'form-control';
+            
+            // ✅ SET PASSWORD
+            if (this.value === 'Admin') {
+                passwordField.value = '@Admin01';
+                passwordField.style.backgroundColor = '#fff3cd';
+                passwordField.style.color = '#856404';
+                passwordField.style.fontWeight = '600';
+            } else if (this.value === 'Personnel') {
+                passwordField.value = '@Personnel01';
+                passwordField.style.backgroundColor = '#d1ecf1';
+                passwordField.style.color = '#0c5460';
+                passwordField.style.fontWeight = '600';
+            }
+            
+            // ✅ Trigger input event
+            passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        
+        // ✅ Copy to clipboard
+        passwordField.addEventListener('click', function(e) {
+            if (this.value) {
+                e.stopPropagation();
+                navigator.clipboard.writeText(this.value).then(() => {
+                    const originalValue = this.value;
+                    const originalBg = this.style.backgroundColor;
+                    const originalColor = this.style.color;
+                    
+                    this.value = 'Copied!';
+                    this.style.backgroundColor = '#d4edda';
+                    this.style.color = '#155724';
+                    
+                    setTimeout(() => {
+                        this.value = originalValue;
+                        this.style.backgroundColor = originalBg;
+                        this.style.color = originalColor;
+                    }, 1500);
+                }).catch(() => {
+                    alert('Copy failed - ' + this.value);
+                });
+            }
+        });
+    }
+    
+    // ===== USER ACTIONS =====
+    window.viewActivities = function(id) {
+        alert('View activities for user: ' + id);
+    };
+    
+    // Global delete variables
+let currentDeleteId = null;
+let currentDeleteName = null;
+
+// Show delete modal
+window.showDeleteModal = function(id, name) {
+    currentDeleteId = id;
+    currentDeleteName = name;
+    document.getElementById('deleteUserName').textContent = name;
+    document.getElementById('deleteUserId').textContent = 'ID: ' + id;
+    document.getElementById('deleteModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+// Close delete modal
+window.closeDeleteModal = function() {
+    document.getElementById('deleteModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    currentDeleteId = null;
+    currentDeleteName = null;
+};
+
+// Perform actual delete
+window.performDelete = function() {
+    if (!currentDeleteId) return;
+    
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    
+    fetch(`/delete_user/${currentDeleteId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            closeDeleteModal();
+            location.reload(); // Refresh to show updated list
+        } else {
+            throw new Error('Delete failed');
+        }
+    })
+    .catch(error => {
+        alert('Delete failed. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash"></i> Yes, Delete Permanently';
+    });
+};
+    
+    window.exportUsers = function() {
+        alert('Export functionality coming soon!');
+    };
+    
+    // ===== GLOBAL EVENTS =====
+    window.onclick = function(event) {
+        const modal = document.getElementById('addUserModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+});
+</script>
+{% endblock %}

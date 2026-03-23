@@ -1,0 +1,240 @@
+/* 🔥 APPLICANT PROFILE - GOVERNMENT DASHBOARD ENHANCEMENT */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Profile Header */
+.d-sm-flex {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 48, 135, 0.3);
+    margin-bottom: 2rem;
+    border-left: 6px solid #003087;
+}
+
+h1 {
+    font-size: 2.3rem !important;
+    font-weight: 700 !important;
+    color: #003087 !important;
+    margin-bottom: 0.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* Navigation Tabs - Official */
+.nav-tabs {
+    border: none !important;
+    border-radius: 8px !important;
+    background: white !important;
+    padding: 0.5rem !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 2rem !important;
+}
+
+.nav-tabs .nav-link {
+    border: none !important;
+    border-radius: 6px !important;
+    color: #6c757d !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    margin: 0 0.25rem !important;
+    transition: all 0.3s !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-size: 0.9rem !important;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #003087 !important;
+    background: rgba(0, 48, 135, 0.05) !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, #003087, #0056b3) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3) !important;
+}
+
+/* Profile Cards - Enhanced */
+.card {
+    background: white !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease !important;
+    margin-bottom: 1.5rem !important;
+    overflow: hidden !important;
+}
+
+.card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 40px rgba(0, 48, 135, 0.15) !important;
+}
+
+.border-left-primary {
+    border-left: 5px solid #003087 !important;
+}
+
+.border-left-info {
+    border-left: 5px solid #0056b3 !important;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #003087, #0056b3) !important;
+    color: white !important;
+    border: none !important;
+    padding: 1.25rem 1.75rem !important;
+}
+
+.card-header h6 {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Profile Table - Clean & Professional */
+.table {
+    margin-bottom: 0 !important;
+    font-size: 0.95rem !important;
+}
+
+.table-borderless td {
+    padding: 0.75rem 0 !important;
+    border: none !important;
+    vertical-align: top !important;
+}
+
+.table td:first-child {
+    font-weight: 700 !important;
+    color: #495057 !important;
+    width: 40% !important;
+    padding-right: 1rem !important;
+    background: rgba(248, 249, 250, 0.5) !important;
+    border-radius: 4px 0 0 4px !important;
+}
+
+.table td:last-child {
+    color: #212529 !important;
+    font-weight: 500 !important;
+    border-radius: 0 4px 4px 0 !important;
+}
+
+/* Status Badges - Official */
+.badge {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    padding: 0.4em 0.8em !important;
+    border-radius: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3) !important;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #ff6b00, #e55a00) !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3) !important;
+}
+
+/* Buttons - Official */
+.btn {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #003087, #0056b3) !important;
+    border-color: #003087 !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 48, 135, 0.4) !important;
+}
+
+.btn-secondary {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.btn-secondary:hover {
+    background: #545b62 !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Empty State */
+.text-muted {
+    color: #adb5bd !important;
+    font-style: italic !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .d-sm-flex {
+        padding: 1.5rem !important;
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 1rem !important;
+    }
+
+    h1 {
+        font-size: 1.8rem !important;
+    }
+
+    .table td:first-child {
+        width: 45% !important;
+        font-size: 0.9rem !important;
+    }
+
+    .nav-tabs {
+        flex-direction: column !important;
+    }
+
+    .nav-tabs .nav-link {
+        margin: 0.25rem 0 !important;
+    }
+
+    .card-body {
+        padding: 1rem !important;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-pane.active {
+    animation: fadeInUp 0.5s ease-out !important;
+}
+
+/* Icons */
+.card-header i {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-right: 0.75rem !important;
+    width: 20px !important;
+}

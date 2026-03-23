@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="border-left: 5px solid #ff6b35; padding-left: 20px;">
+        <h2 style="color: #dc2626;">⚠️ Security Alert</h2>
+        <p>Dear {{ user.first_name|default:user.email }},</p>
+        
+        <p><strong>A suspicious password reset attempt was detected:</strong></p>
+        <ul style="color: #dc2626;">
+            <li><strong>Your ID:</strong> {{ user.id_number }}</li>
+            <li><strong>Suspicious Email:</strong> {{ suspicious_email }}</li>
+            <li><strong>Time:</strong> {{ now|date:"M d, Y H:i" }}</li>
+        </ul>
+        
+        <p>If this was <strong>NOT you</strong>, your account is secure. No changes were made.</p>
+        
+        <p style="background: #fef3c7; padding: 15px; border-radius: 5px; border-left: 4px solid #f59e0b;">
+            <strong>Action Required:</strong> If you notice unauthorized activity, 
+            <a href="https://yourdomain.com/login" style="color: #1e40af;">login now</a> and change your password.
+        </p>
+        
+        <hr style="margin: 30px 0;">
+        <p style="color: #6b7280; font-size: 12px;">
+            This is an automated security notification from {{ domain }}.
+        </p>
+    </div>
+</body>
+</html>

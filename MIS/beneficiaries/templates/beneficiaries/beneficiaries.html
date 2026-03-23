@@ -1,0 +1,713 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Beneficiaries - MIS{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/beneficiaries.css' %}">
+
+<div class="container-fluid mt-3 mb-4">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius: 12px;">
+            <div class="d-flex align-items-center">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle text-success{% elif message.tags == 'error' or message.tags == 'danger' %}fa-exclamation-triangle text-danger{% else %}fa-info-circle{% endif %} me-3 fs-5"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+<style>
+.alert-container .alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+.alert-success { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+.alert-danger { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+</style>
+<!-- Header with Subtitle -->
+<div class="page-header">
+    <div class="header-content">
+        <h1 class="h2 mb-1">Beneficiaries Management</h1>
+        <p class="header-subtitle mb-0">Manage active and inactive beneficiaries across all districts</p>
+    </div>
+    
+    {% if user.position == 'Personnel' %}
+<div class="btn-container">
+    <a href="{% url 'add_beneficiary' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i>
+        <span>Add Beneficiary</span>
+    </a>
+</div>
+{% endif %}
+</div>
+
+<!-- Stats Cards Row - CLICKABLE -->
+<div class="stats-row mb-4">
+    <div class="stat-card" data-tab="0">
+        <div class="stat-icon bg-green">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div>
+            <p class="stat-label">Active</p>
+            <p class="stat-number">{{ active_count }}</p>
+        </div>
+    </div>
+    <div class="stat-card" data-tab="1">
+        <div class="stat-icon bg-gray">
+            <i class="fas fa-user-slash"></i>
+        </div>
+        <div>
+            <p class="stat-label">Inactive</p>
+            <p class="stat-number">{{ inactive_count }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-blue">
+            <i class="fas fa-users"></i>
+        </div>
+        <div>
+            <p class="stat-label">Total</p>
+            <p class="stat-number">{{ total_count }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-section mb-4">
+    <form method="GET" class="filter-form" id="beneficiaryFilterForm">
+        <div class="filter-row">
+            <div class="form-group">
+                <label class="form-label">District</label>
+                <select name="district" id="districtFilter" class="form-select">
+                    <option value="">All Districts</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Municipality</label>
+                <select name="municipality" id="municipalityFilter" class="form-select" disabled>
+                    <option value="">All Municipalities</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Barangay</label>
+                <select name="barangay" id="barangayFilter" class="form-select" disabled>
+                    <option value="">All Barangays</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" id="searchFilter" class="form-control" placeholder="Search beneficiaries...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Bootstrap Tabs -->
+<ul class="nav nav-tabs mb-4" id="beneficiaryTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab" aria-controls="active" aria-selected="true">
+            <i class="fas fa-user-check me-2"></i>Active Beneficiaries
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="inactive-tab" data-bs-toggle="tab" data-bs-target="#inactive" type="button" role="tab" aria-controls="inactive" aria-selected="false">
+            <i class="fas fa-user-slash me-2"></i>Inactive Beneficiaries
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="beneficiaryTabContent">
+    <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
+        <div class="card shadow-lg">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="header-title-group">
+                    <h5 class="mb-0 d-inline-block me-4">Active Beneficiaries</h5>
+                    <div class="action-buttons d-inline-flex">
+    <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="importActiveBtn" title="Import CSV">
+        <i class="fas fa-download"></i> Import
+    </button>
+    
+    <button type="button" class="btn btn-outline-success btn-sm" id="exportActiveBtn" title="Export Filtered CSV">
+        <i class="fas fa-upload"></i> Export
+    </button>
+</div>
+                </div>
+                <small class="text-muted">Showing approved/active beneficiaries</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>District</th>
+                                <th>Municipalities</th>
+                                <th>Details</th>
+                                <th>Financial</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeTableBody">
+                            {% for beneficiary in active_beneficiaries %}
+                            <tr data-beneficiary-id="{{ beneficiary.beneficiary_id }}" data-pk="{{ beneficiary.id_number }}">
+                                <td><strong class="text-primary">{{ beneficiary.beneficiary_id }}</strong></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-sm bg-primary me-2">
+                                            {{ beneficiary.first_name.0|upper }}{{ beneficiary.last_name.0|upper }}
+                                        </div>
+                                        <div>
+                                            <div>{{ beneficiary.last_name }}, {{ beneficiary.first_name }}
+                                                {% if beneficiary.middle_name %}{{ beneficiary.middle_name.0 }}.{% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ beneficiary.street_house }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {% if beneficiary.district %}{{ beneficiary.district.name }}{% else %}District{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if beneficiary.municipality %}
+                                        {{ beneficiary.municipality.name }}
+                                    {% endif %}
+                                    {% if beneficiary.barangay %}, {{ beneficiary.barangay.name }}{% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'beneficiary_details' beneficiary.id_number %}" 
+                                       class="btn btn-outline-primary btn-sm" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                                <td>
+    {% if beneficiary.has_loans %}
+        <a href="{% url 'loan_records' beneficiary.latest_loan.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-invoice-dollar"></i> View Loan</a>
+    {% else %}
+        <a href="{% url 'finance' beneficiary.id_number %}" class="btn btn-outline-success btn-sm"><i class="fas fa-plus-circle"></i> New Loan</a>
+    {% endif %}
+</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted"> No active beneficiaries</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="inactive" role="tabpanel" aria-labelledby="inactive-tab" tabindex="0">
+        <div class="card shadow-lg">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="header-title-group">
+                    <h5 class="mb-0 d-inline-block me-4">Inactive Beneficiaries</h5>
+                    <div class="action-buttons d-inline-flex">
+    <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="importInactiveBtn" title="Import CSV">
+        <i class="fas fa-download"></i> Import
+    </button>
+    <button type="button" class="btn btn-outline-success btn-sm" id="exportInactiveBtn" title="Export Filtered CSV">
+        <i class="fas fa-upload"></i> Export
+    </button>
+</div>
+                </div>
+                <small class="text-muted">Showing inactive beneficiaries</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>District</th>
+                                <th>Municipalities</th>
+                                <th>Details</th>
+                                <th>Financial</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inactiveTableBody">
+                            {% for beneficiary in inactive_beneficiaries %}
+                            <tr data-beneficiary-id="{{ beneficiary.beneficiary_id }}" data-pk="{{ beneficiary.id_number }}">
+                                <td><strong class="text-secondary">{{ beneficiary.beneficiary_id }}</strong></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-sm bg-secondary me-2">
+                                            {{ beneficiary.first_name.0|upper }}{{ beneficiary.last_name.0|upper }}
+                                        </div>
+                                        <div>
+                                            <div>{{ beneficiary.last_name }}, {{ beneficiary.first_name }}
+                                                {% if beneficiary.middle_name %}{{ beneficiary.middle_name.0 }}.{% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ beneficiary.street_house }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if beneficiary.municipality %}
+                                        {{ beneficiary.municipality.name }}
+                                    {% endif %}
+                                    {% if beneficiary.barangay %}, {{ beneficiary.barangay.name }}{% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {% if beneficiary.district %}{{ beneficiary.district.name }}{% else %}District{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'beneficiary_details' beneficiary.id_number %}" 
+                                       class="btn btn-outline-primary btn-sm" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+<td>
+    {% if beneficiary.has_loans %}
+        <a href="{% url 'loan_records' beneficiary.latest_loan.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-invoice-dollar"></i> View Loan</a>
+    {% else %}
+        <a href="{% url 'finance' beneficiary.id_number %}" class="btn btn-outline-success btn-sm"><i class="fas fa-plus-circle"></i> New Loan</a>
+    {% endif %}
+</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted"> No inactive beneficiaries</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display: none;">
+    <form id="importForm" method="POST" enctype="multipart/form-data" action="{% url 'beneficiaries_import' %}">
+        {% csrf_token %}
+        <input type="file" name="csv_file" accept=".csv" required>
+        <input type="hidden" name="tab" id="importTab">
+    </form>
+</div>
+
+<script>
+// 🔥 PURE VANILLA JS TABS - TABLES FULLY HIDDEN
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔥 Pure JS tabs - Tables fully hidden...');
+    
+    // 🔥 Enhanced tab switching - FULLY HIDE inactive tables
+    function showTab(tabName) {
+        console.log('🔥 Switching to tab:', tabName);
+        
+        // 🔥 Hide ALL tab panes COMPLETELY
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('show', 'active');
+            pane.style.display = 'none';  // 🔥 FULLY HIDE
+            pane.style.opacity = '0';
+            pane.style.visibility = 'hidden';
+            pane.setAttribute('aria-hidden', 'true');
+        });
+        
+        // 🔥 Show ONLY target tab
+        const targetTab = document.getElementById(tabName);
+        if (targetTab) {
+            targetTab.classList.add('show', 'active');
+            targetTab.style.display = 'block';  // 🔥 SHOW
+            targetTab.style.opacity = '1';
+            targetTab.style.visibility = 'visible';
+            targetTab.setAttribute('aria-hidden', 'false');
+            targetTab.style.animation = 'fadeIn 0.3s ease-out';
+            targetTab.focus();
+        }
+        
+        // 🔥 Update tab buttons
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+            link.setAttribute('aria-selected', 'false');
+            link.setAttribute('tabindex', '-1');
+        });
+        
+        const activeButton = document.getElementById(tabName + '-tab');
+        if (activeButton) {
+            activeButton.classList.add('active');
+            activeButton.setAttribute('aria-selected', 'true');
+            activeButton.setAttribute('tabindex', '0');
+        }
+        
+        // 🔥 Stats card highlight
+        document.querySelectorAll('.stat-card[data-tab]').forEach(card => {
+            card.classList.remove('active-highlight');
+        });
+        const statCard = document.querySelector(`[data-tab="${tabName}"]`);
+        if (statCard) statCard.classList.add('active-highlight');
+    }
+    
+    // 🔥 Initialize - Show active tab only
+    showTab('active'); // Default to active tab
+    
+    // 🔥 Stats Cards Click
+    document.querySelectorAll('.stat-card[data-tab]').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        card.addEventListener('mouseenter', () => {
+            if (!card.classList.contains('active-highlight')) {
+                card.style.transform = 'translateY(-4px) scale(1.02)';
+            }
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'scale(1)';
+        });
+        
+        card.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            showTab(tabName);
+        });
+    });
+    
+    // 🔥 Tab Buttons Click
+    document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const target = this.getAttribute('data-bs-target');
+            const tabName = target.replace('#', '');
+            showTab(tabName);
+        });
+    });
+    
+    // 🔥 Keyboard Support
+    document.querySelectorAll('.nav-tabs .nav-link').forEach((link, index) => {
+        link.setAttribute('tabindex', index === 0 ? '0' : '-1');
+        link.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    console.log('Tables fully hidden/visible!');
+    console.log('Active table ONLY visible, others 100% hidden');
+});
+
+// 🔥 CSS Animation (Inline - No conflicts)
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .tab-pane {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 🔥 HELPER FUNCTIONS
+    function showImportMessage(message, status = 'success') {
+        // Remove existing messages
+        document.querySelectorAll('.import-message').forEach(el => el.remove());
+        
+        // Create message div
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `alert alert-${status === 'success' ? 'success' : 'danger'} alert-dismissible fade show shadow-sm border-0 import-message mb-4`;
+        messageDiv.style.cssText = 'border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);';
+        messageDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${status === 'success' ? 'fa-check-circle text-success' : 'fa-exclamation-triangle text-danger'} me-3 fs-5"></i>
+                <strong>${status === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insert at TOP of current tab
+        const currentTab = document.querySelector('.tab-pane.show.active');
+        if (currentTab) {
+            currentTab.insertBefore(messageDiv, currentTab.firstChild);
+        }
+        
+        // Auto-hide success after 5s
+        if (status === 'success') {
+            setTimeout(() => {
+                const alert = new bootstrap.Alert(messageDiv);
+                if (alert) alert.close();
+            }, 5000);
+        }
+    }
+    
+    function refreshCurrentTable() {
+        const activeTab = document.querySelector('.tab-pane.show.active').id;
+        const tbody = document.getElementById(activeTab + 'TableBody');
+        const districtFilter = document.getElementById('districtFilter');
+        const municipalityFilter = document.getElementById('municipalityFilter');
+        const barangayFilter = document.getElementById('barangayFilter');
+        const searchFilter = document.getElementById('searchFilter');
+        
+        const params = new URLSearchParams({
+            district: districtFilter.value,
+            municipality: municipalityFilter.value,
+            barangay: barangayFilter.value,
+            search: searchFilter.value,
+            tab: activeTab
+        });
+        
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" style="width: 2rem; height: 2rem;"></div> Refreshing...</td></tr>';
+        
+        fetch(`/beneficiaries/api/table/?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = data.html;
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Refresh error</td></tr>';
+            });
+    }
+    
+    // 🔥 EXPORT BUTTONS - Pass current filters
+    document.getElementById('exportActiveBtn')?.addEventListener('click', function() {
+        const params = new URLSearchParams({
+            tab: 'active',
+            district: document.getElementById('districtFilter').value,
+            municipality: document.getElementById('municipalityFilter').value,
+            barangay: document.getElementById('barangayFilter').value,
+            search: document.getElementById('searchFilter').value
+        });
+        window.open(`/beneficiaries/export/?${params}`, '_blank');
+    });
+    
+    document.getElementById('exportInactiveBtn')?.addEventListener('click', function() {
+        const params = new URLSearchParams({
+            tab: 'inactive',
+            district: document.getElementById('districtFilter').value,
+            municipality: document.getElementById('municipalityFilter').value,
+            barangay: document.getElementById('barangayFilter').value,
+            search: document.getElementById('searchFilter').value
+        });
+        window.open(`/beneficiaries/export/?${params}`, '_blank');
+    });
+    
+    // 🔥 IMPORT BUTTONS - Show file picker
+    document.getElementById('importActiveBtn')?.addEventListener('click', function() {
+        document.getElementById('importTab').value = 'active';
+        document.getElementById('importForm').querySelector('input[type=file]').click();
+    });
+    
+    document.getElementById('importInactiveBtn')?.addEventListener('click', function() {
+        document.getElementById('importTab').value = 'inactive';
+        document.getElementById('importForm').querySelector('input[type=file]').click();
+    });
+    
+    // 🔥 FILE INPUT CHANGE - AUTO SUBMIT WITH AJAX
+    const fileInput = document.getElementById('importForm')?.querySelector('input[type=file]');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                console.log('🔥 File selected:', this.files[0].name);
+                
+                const activeTab = document.getElementById('importTab').value;
+                const importBtn = document.getElementById(`import${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}Btn`);
+                
+                // Show loading on button
+                if (importBtn) {
+                    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Importing...';
+                    importBtn.disabled = true;
+                }
+                
+                // Create FormData
+                const formData = new FormData();
+                formData.append('csv_file', this.files[0]);
+                formData.append('tab', activeTab);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                
+                // AJAX Submit
+                fetch('/beneficiaries/import/', {  // Update to your actual import URL
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('✅ Import success:', data);
+                    showImportMessage(data.message || 'Import completed successfully!', 'success');
+                    refreshCurrentTable();
+                })
+                .catch(error => {
+    console.error('❌ Import failed:', error);
+    
+    // 🔥 SHOW ACTUAL BACKEND ERROR MESSAGE
+    if (error.message.includes('400') || error.message.includes('500')) {
+        // Fetch error details from backend
+        fetch('/beneficiaries/import/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Backend: ${text.substring(0, 200)}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            showImportMessage(data?.message || 'Unknown error', 'error');
+        })
+        .catch(backendError => {
+            console.error('Backend error details:', backendError);
+            showImportMessage(
+                backendError.message.includes('No ID column') ? 
+                'No "beneficiary_id" or "ID" column found!' :
+                backendError.message.includes('too large') ? 
+                'File too large (max 10MB)' :
+                'Invalid file format. Try saving Excel as CSV.',
+                'error'
+            );
+        });
+    } else {
+        showImportMessage('Network error. Please try again.', 'error');
+    }
+})
+                .finally(() => {
+                    // Reset everything
+                    this.value = '';
+                    if (importBtn) {
+                        importBtn.innerHTML = '<i class="fas fa-download"></i> Import';
+                        importBtn.disabled = false;
+                    }
+                });
+            }
+        });
+    }
+    
+    console.log('🔥 Import/Export handlers ready!');
+});
+
+// 🔥 NO RELOADS - Pure AJAX Cascade + Filter (YOUR EXISTING CODE - UNCHANGED)
+document.addEventListener('DOMContentLoaded', function() {
+    const districtFilter = document.getElementById('districtFilter');
+    const municipalityFilter = document.getElementById('municipalityFilter');
+    const barangayFilter = document.getElementById('barangayFilter');
+    const searchFilter = document.getElementById('searchFilter');
+
+    // 🔥 Load Districts (Happens ONCE)
+    fetch('/beneficiaries/api/filters/districts/')
+        .then(r => r.json())
+        .then(districts => {
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district.id;
+                option.textContent = district.name;
+                districtFilter.appendChild(option);
+            });
+        });
+
+    // 🔥 District Change - Cascade + Filter Table
+    districtFilter.addEventListener('change', function() {
+        const districtId = this.value;
+        
+        // Reset lower dropdowns
+        municipalityFilter.innerHTML = '<option value="">All Municipalities</option>';
+        barangayFilter.innerHTML = '<option value="">All Barangays</option>';
+        municipalityFilter.disabled = !districtId;
+        barangayFilter.disabled = true;
+        
+        // 🔥 Load Municipalities for THIS district
+        if (districtId) {
+            fetch(`/beneficiaries/api/filters/municipalities/?district=${districtId}`)
+                .then(r => r.json())
+                .then(municipalities => {
+                    municipalities.forEach(muni => {
+                        const option = document.createElement('option');
+                        option.value = muni.id;
+                        option.textContent = muni.name;
+                        municipalityFilter.appendChild(option);
+                    });
+                });
+        }
+        
+        // 🔥 Filter table (no reload!)
+        filterTable();
+    });
+
+    // 🔥 Municipality Change
+    municipalityFilter.addEventListener('change', function() {
+        const muniId = this.value;
+        
+        // Reset barangays
+        barangayFilter.innerHTML = '<option value="">All Barangays</option>';
+        barangayFilter.disabled = !muniId;
+        
+        // Load barangays
+        if (muniId) {
+            fetch(`/beneficiaries/api/filters/barangays/?municipality=${muniId}`)
+                .then(r => r.json())
+                .then(barangays => {
+                    barangays.forEach(brgy => {
+                        const option = document.createElement('option');
+                        option.value = brgy.id;
+                        option.textContent = brgy.name;
+                        barangayFilter.appendChild(option);
+                    });
+                });
+        }
+        
+        filterTable();
+    });
+
+    // 🔥 Barangay Change
+    barangayFilter.addEventListener('change', filterTable);
+
+    // 🔥 Live Search
+    let searchTimeout;
+    searchFilter.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterTable, 500);
+    });
+
+    // 🔥 CORE: Filter Table Without Reload
+    function filterTable() {
+        const activeTab = document.querySelector('.tab-pane.show.active').id;
+        const tbody = document.getElementById(activeTab + 'TableBody');
+        
+        const params = new URLSearchParams({
+            district: districtFilter.value,
+            municipality: municipalityFilter.value,
+            barangay: barangayFilter.value,
+            search: searchFilter.value,
+            tab: activeTab
+        });
+
+        // Show loading
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border"></div></td></tr>';
+
+        fetch(`/beneficiaries/api/table/?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = data.html;
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Filter error - reload page</td></tr>';
+            });
+    }
+});
+</script>
+
+{% endblock %}

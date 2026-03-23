@@ -1,0 +1,100 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block content %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Record Assistance Loan - DSWD</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/finance.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <main class="card gov-card">
+        <header class="header gov-header">
+
+            <h1>Record Assistance Loan</h1>
+            <div class="timestamp">
+                <i class="fas fa-clock"></i>
+                {{ now|date:"Y-m-d h:i:A" }}
+                <span class="live-badge">LIVE</span>
+            </div>
+        </header>
+        
+        <div class="content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Loan Requirements -->
+            <div class="requirements">
+                <strong>⚠️ IMPORTANT:</strong>
+                <ul>
+                    <li>Amount <strong>CANNOT be edited</strong> after submission</li>
+                    <li>Only approved amounts: ₱2,000 | ₱5,000 | ₱10,000</li>
+                    <li>This creates a <strong>PERMANENT record</strong></li>
+                </ul>
+            </div>
+            
+            <form method="POST" id="loanForm">
+                {% csrf_token %}
+                
+                    <!-- 🔥 ADD THIS FIELD BACK -->
+    <div class="form-group">
+        <label>BENEFICIARY ID <span class="required">*</span></label>
+        <div class="input-wrapper">
+            {{ form.beneficiary_id|add_class:"input-field" }}
+            <i class="fas fa-id-card input-icon"></i>
+        </div>
+    </div>
+
+                <div class="form-group">
+                    <label>LOAN AMOUNT (₱) <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        {{ form.amount|add_class:"select-field" }}
+                        <i class="fas fa-money-bill-wave input-icon"></i>
+                        <span class="currency">₱</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn gov-submit">
+                    <i class="fas fa-file-signature"></i>
+                    RECORD LOAN OFFICIALLY
+                </button>
+            </form>
+        </div>
+        
+        <div class="links">
+            <a href="{% url 'beneficiaries' %}">
+                <i class="fas fa-arrow-left"></i> Back to Beneficiaries
+            </a>
+        </div>
+    </main>
+
+    <script>
+    function confirmLoan() {
+        return confirm(
+            "⚠️ OFFICIAL GOVERNMENT RECORD\n\n" +
+            "Are you sure you want to RECORD this loan?\n\n" +
+            "✓ Creates PERMANENT record\n" +
+            "✗ Amount CANNOT be edited\n" +
+            "✓ Immediately logged\n\n" +
+            "Click OK to proceed."
+        );
+    }
+    document.getElementById('loanForm').addEventListener('submit', function(e) {
+        if (!confirmLoan()) {
+            e.preventDefault();
+        }
+    });
+    </script>
+</body>
+</html>
+{% endblock %}

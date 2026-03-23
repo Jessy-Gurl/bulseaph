@@ -1,0 +1,636 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block title %}Loan Records - {{ loan.beneficiary.id_number }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="container">
+    <!-- Header -->
+    <div class="header-card">
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 class="header-title">
+                    <i class="fas fa-receipt text-primary me-2"></i>
+                    Loan Records
+                </h1>
+                <p class="header-subtitle">{{ loan.beneficiary.first_name }} {{ loan.beneficiary.last_name }} - {{ loan.beneficiary.beneficiary_id }}</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                {% if loan.get_balance > 0 %}
+                    <button class="btn btn-success px-4 py-2 fw-bold" onclick="openPaymentModal()">
+                        <i class="fas fa-plus me-2"></i>Add Payment
+                    </button>
+                {% else %}
+                    <button class="btn btn-warning px-4 py-2 fw-bold glass-renew-btn" onclick="openRenewModal()">
+                        <i class="fas fa-file-renew me-2"></i>Renew Loan
+                    </button>
+                {% endif %}
+                <button class="btn back">
+                    <a href="{% url 'beneficiaries' %}">
+                        <i class="fas fa-arrow-left"></i> Back to Beneficiaries
+                    </a>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div style="display: flex; align-items: center;">
+                <div class="stat-icon stat-primary">
+                    <i class="fas fa-circle-notch"></i>
+                </div>
+                <div style="flex: 1;">
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Status</p>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        {% if loan.get_balance == 0 %}
+                            <span class="stat-number text-success" style="color: #10b981 !important;">
+                                <i class="fas fa-check-circle me-1"></i>COMPLETE
+                            </span>
+                            <span class="badge bg-success fs-6"></span>
+                        {% elif loan.is_overdue %}
+                            <span class="stat-number text-danger" style="color: #ef4444 !important;">
+                                <i class="fas fa-clock me-1"></i>{{ loan.status|title }}
+                            </span>
+                            <span class="badge bg-danger fs-6 animate-pulse">OVERDUE</span>
+                        {% else %}
+                            <span class="stat-number {{ loan.status|lower }}">
+                                {{ loan.status|title|default:"Pending" }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div style="display: flex; align-items: center;">
+                <div class="stat-icon stat-success"><i class="fas fa-money-bill-wave"></i></div>
+                <div>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Current Loan</p>
+                    <p class="stat-number">₱{{ loan.amount|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div style="display: flex; align-items: center;">
+                <div class="stat-icon stat-warning"><i class="fas fa-wallet"></i></div>
+                <div>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Remaining</p>
+                    <p class="stat-number {% if loan.get_balance > 0 %}text-warning fw-bold{% else %}text-success fw-bold{% endif %}">
+                        ₱{{ loan.get_balance|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div style="display: flex; align-items: center;">
+                <div class="stat-icon stat-info">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Total History</p>
+                    <p class="stat-number text-info">₱{{ history_total_paid|floatformat:2 }}</p>
+                    {% if history_payment_count > 0 %}
+                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500;">
+                        {{ history_payment_count }} payments
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div style="display: flex; align-items: center;">
+                <div class="stat-icon stat-info">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Date Received</p>
+                    <p class="stat-number">{{ loan.loan_date|date:"M d, Y"|default:"—" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div style="display: flex; align-items: center;">
+                <div class="stat-icon stat-info"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; font-weight: 500;">Due Date</p>
+                    <p class="stat-number">{{ loan.due_date|date:"M d, Y"|default:"—" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔥 Table Tabs - PERFECTLY POSITIONED -->
+    <div class="table-tabs">
+        <div style="display: flex; background: white; border-radius: 12px; padding: 0.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <button class="tab-btn active" onclick="showTab('current')" id="current-tab">
+                <i class="fas fa-receipt me-1"></i>Current Loan
+                {% if payments %}
+                    <span class="badge bg-primary ms-1">{{ payments|length }}</span>
+                {% else %}
+                    <span class="badge bg-secondary ms-1">0</span>
+                {% endif %}
+            </button>
+            <button class="tab-btn" onclick="showTab('history')" id="history-tab">
+                <i class="fas fa-history me-1"></i>Complete History
+                <span class="badge bg-info ms-1">{{ history_transactions|length }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Current Payments Table -->
+    <div id="current-tab-content" class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>OR Number</th>
+                    <th style="text-align: center;">Amount</th>
+                    <th>Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if payments %}
+                    {% for payment in payments %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600; color: #374151;">{{ payment.payment_date|date:"M d, Y" }}</div>
+                            <div style="color: #9ca3af; font-size: 0.875rem;">
+                                {% if payment.payment_time %}
+                                    {{ payment.payment_time|time:"h:mm A" }}
+                                {% else %}
+                                    {{ payment.created_at|time:"h:mm A" }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td><strong class="text-primary">{{ payment.or_number|default:"No OR #" }}</strong></td>
+                        <td style="text-align: center;">
+                            <span class="stat-number text-success fs-5 fw-bold">₱{{ payment.amount|floatformat:2 }}</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-success">
+                                {{ payment.get_payment_method_display|default:"Cash" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 4rem; color: #9ca3af;">
+                        <i class="fas fa-receipt-slash fa-3x mb-3 opacity-50"></i>
+                        <div style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #6b7280;">
+                            No Payment Records Yet
+                        </div>
+                        {% if loan.get_balance > 0 %}
+                        <button class="btn btn-primary px-5 py-3 fs-5 fw-bold" onclick="openPaymentModal()">
+                            <i class="fas fa-plus-circle me-2"></i>Record First Payment
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+            {% if payments %}
+            <tfoot style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                <tr style="font-weight: 700; font-size: 1.25rem;">
+                    <td colspan="2" style="text-align: right; padding-top: 1.5rem; color: #374151;">
+                        CURRENT TOTAL PAID:
+                    </td>
+                    <td style="text-align: right; color: #10b981;">
+                        ₱{{ total_paid|floatformat:2 }}
+                        {% if loan.get_balance > 0 %}
+                            <div style="font-size: 0.875rem; color: #6b7280; font-weight: 500; margin-top: 0.25rem;">
+                                ({{ payments|length }} payments | remaining: ₱{{ loan.get_balance|floatformat:2 }})
+                            </div>
+                        {% else %}
+                            <span class="status-badge status-success ms-2 fs-6 px-3 py-2">COMPLETE</span>
+                        {% endif %}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+
+    <!-- 🔥 History Table -->
+    <div id="history-tab-content" class="table-container" style="display: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th style="text-align: center;">Amount</th>
+                    <th style="text-align: center;">Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if history_transactions %}
+                    {% for hist in history_transactions %}
+                    <tr style="{% if hist.transaction_type == 'loan' %}background: #fef3c7;{% else %}background: #f0fdf4;{% endif %} opacity: 0.85;">
+                        <td>
+                            {% if hist.transaction_type == 'loan' %}
+                                <span class="status-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 0.75rem;">
+                                    <i class="fas fa-money-bill-wave me-1"></i>LOAN
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-success" style="font-size: 0.75rem;">
+                                    <i class="fas fa-receipt me-1"></i>PAYMENT
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: #374151;">{{ hist.date|date:"M d, Y" }}</div>
+                            <div style="color: #9ca3af; font-size: 0.875rem;">{{ hist.date|time:"h:mm A" }}</div>
+                        </td>
+                        <td>
+                            <strong style="color: {% if 'ARCHIVED' in hist.reference %}#9ca3af{% else %}#3b82f6{% endif %}; font-size: 0.9rem;">
+                                {{ hist.reference|truncatechars:25 }}
+                            </strong>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="stat-number {% if hist.transaction_type == 'loan' %}text-warning{% else %}text-success{% endif %} fs-5 fw-bold">
+                                {% if hist.transaction_type == 'loan' %}-{% endif %}₱{{ hist.amount|floatformat:2 }}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="stat-number {% if hist.balance > 0 %}text-warning fw-bold{% else %}text-success fw-bold{% endif %}">
+                                ₱{{ hist.balance|floatformat:2 }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 4rem; color: #9ca3af;">
+                        <i class="fas fa-history fa-3x mb-3 opacity-50"></i>
+                        <div style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #6b7280;">
+                            No History Records Yet
+                        </div>
+                        <p style="color: #9ca3af;">Complete your first loan cycle to see history</p>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+            {% if history_transactions %}
+            <tfoot style="background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);">
+                <tr style="font-weight: 700; font-size: 1.25rem;">
+                    <td colspan="3" style="text-align: right; padding-top: 1.5rem; color: #374151;">
+                        <strong>TOTAL LIFETIME PAID:</strong>
+                    </td>
+                    <td style="text-align: right; color: #10b981; font-size: 1.5rem;">
+                        ₱{{ history_total_paid|floatformat:2 }}
+                    </td>
+                    <td style="text-align: center; color: #6b7280; font-size: 1rem;">
+                        {{ history_transactions|length }} records
+                        <div style="font-size: 0.8rem;">
+                            {{ history_payment_count }} payments • {{ history_loan_count }} loans
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+
+    <!-- Add Payment Modal -->
+    <div id="paymentModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 12px 12px 0 0;">
+                <h2 style="margin: 0;"><i class="fas fa-plus-circle me-3"></i>Add Payment Record</h2>
+                <span class="close" onclick="closePaymentModal()" style="font-size: 1.5rem; font-weight: bold;">&times;</span>
+            </div>
+            <form method="POST" action="{% url 'loan_records' loan.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="payment_submit" value="1">
+                <input type="hidden" name="payment_method" value="cash">
+                <div class="modal-body" style="padding: 2rem;">
+                    <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
+                        <div style="font-size: 0.875rem; color: #1e40af; font-weight: 500; margin-bottom: 0.5rem;">
+                            <i class="fas fa-wallet me-2"></i>Current Balance
+                        </div>
+                        <div style="font-size: 2.5rem; font-weight: 800; color: #1d4ed8; margin-bottom: 0.25rem;">
+                            ₱{{ loan.get_balance|floatformat:2 }}
+                        </div>
+                        <div style="background: #dbeafe; color: #1e40af; padding: 0.375rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600;">
+                            Cash Payment
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937; font-size: 1.1rem;">
+                            Amount Paid <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="number" name="amount" step="0.01" min="0.01" required 
+                               class="form-control form-control-lg" 
+                               placeholder="Enter amount"
+                                                              style="font-size: 1.5rem; font-weight: 700; padding: 1rem; border: 2px solid #d1d5db; border-radius: 12px; background: #fff;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.75rem; color: #374151;">
+                            OR Number (Optional)
+                        </label>
+                        <input type="text" name="or_number" maxlength="50" 
+                               class="form-control form-control-lg" 
+                               placeholder="Enter OR Number (e.g. OR-2024-001)"
+                               style="padding: 0.875rem; border: 2px solid #d1d5db; border-radius: 12px;">
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1.5rem 2rem; border-top: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-outline-secondary px-5 py-2 fs-5" onclick="closePaymentModal()" style="border-radius: 10px;">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success px-5 py-2 fs-5 fw-bold shadow-lg" style="border-radius: 10px;">
+                        <i class="fas fa-save me-2"></i>Record Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Renew Modal - UPDATED with history info -->
+    <div id="renewModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border-radius: 12px 12px 0 0;">
+                <h2 style="margin: 0;"><i class="fas fa-sync-alt me-3"></i>Renew Loan</h2>
+                <span class="close" onclick="closeRenewModal()" style="font-size: 1.5rem; font-weight: bold;">&times;</span>
+            </div>
+            <form method="POST" action="{% url 'loan_records' loan.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="renew_submit" value="1">
+                <div class="modal-body" style="padding: 2rem;">
+                    <!-- Enhanced Success Message -->
+                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
+                        <div style="display: flex; align-items: flex-start; justify-content: center; gap: 1rem;">
+                            <i class="fas fa-check-circle fa-2x text-success mt-1" style="flex-shrink: 0;"></i>
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; font-weight: 800; color: #166534;">Loan Fully Paid! 🎉</h4>
+                                <p style="margin: 0 0 0.5rem 0; color: #166534; font-weight: 500;">
+                                    {{ payments|length }} payments will be archived to history
+                                </p>
+                                <div style="font-size: 0.875rem; color: #15803d; background: rgba(34,197,94,0.1); padding: 0.5rem; border-radius: 6px;">
+                                    📜 Current loan + payments → History tab
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937; font-size: 1.1rem;">
+                            New Loan Amount <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="number" name="amount" step="0.01" min="0.01" required 
+                               class="form-control form-control-lg" 
+                               placeholder="Enter new amount (e.g. 5000.00)"
+                               value="{{ loan.amount }}"
+                               style="font-size: 1.5rem; font-weight: 700; padding: 1rem; border: 2px solid #d1d5db; border-radius: 12px; background: #fff;">
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1.5rem 2rem; border-top: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-outline-secondary px-5 py-2 fs-5" onclick="closeRenewModal()" style="border-radius: 10px;">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning px-5 py-2 fs-5 fw-bold shadow-lg" style="border-radius: 10px;">
+                        <i class="fas fa-sync-alt me-2"></i>✅ Renew & Archive ({{ payments|length }} payments)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    window.showTab = function(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.table-container').forEach(container => {
+            container.style.display = 'none';
+        });
+        
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName + '-tab-content').style.display = 'block';
+        document.getElementById(tabName + '-tab').classList.add('active');
+    };
+    
+    // Payment Modal
+    window.openPaymentModal = function() {
+        document.getElementById('paymentModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+    
+    window.closePaymentModal = function() {
+        document.getElementById('paymentModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+    
+    // Renew Modal
+    window.openRenewModal = function() {
+        document.getElementById('renewModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+    
+    window.closeRenewModal = function() {
+        document.getElementById('renewModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+    
+    // Form submission loading states
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+    
+    // Table row hover effects
+    document.querySelectorAll('.table-container tbody tr').forEach(row => {
+        row.style.transition = 'all 0.2s ease';
+        row.addEventListener('mouseenter', () => {
+            row.style.backgroundColor = '#f8fafc !important';
+            row.style.transform = 'translateY(-1px)';
+        });
+        row.addEventListener('mouseleave', () => {
+            row.style.backgroundColor = '';
+            row.style.transform = '';
+        });
+    });
+    
+    // Close modals on outside click
+    window.onclick = function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+    };
+    
+    // Number input formatting
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value < 0.01) this.value = '';
+        });
+    });
+});
+</script>
+
+<style>
+/* 🔥 COMPLETE STYLES - Self-contained */
+.container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+.header-card { 
+    background: white; border-radius: 20px; padding: 2rem; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 2rem; 
+    border: 1px solid #e5e7eb;
+}
+.header-title { font-size: 2.25rem; font-weight: 800; margin: 0 0 0.25rem 0; color: #1f2937; }
+.header-subtitle { font-size: 1.125rem; color: #6b7280; margin: 0; font-weight: 500; }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.stat-card { 
+    background: white; padding: 1.5rem; border-radius: 16px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+.stat-icon {
+    width: 60px; height: 60px; border-radius: 16px; 
+    display: flex; align-items: center; justify-content: center; 
+    margin-right: 1rem; font-size: 1.25rem; color: white; flex-shrink: 0;
+}
+.stat-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.stat-success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-info { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.stat-number { font-size: 1.75rem; font-weight: 800; margin: 0; line-height: 1.2; }
+
+.table-tabs { margin-bottom: 1.5rem; }
+.tab-btn {
+    flex: 1; padding: 0.75rem 1.5rem; border: none; background: transparent; 
+    border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; 
+    color: #6b7280; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+}
+.tab-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; 
+    box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+}
+.tab-btn:hover:not(.active) { background: #f1f5f9; color: #374151; }
+
+.table-container {
+    background: white; border-radius: 16px; overflow: hidden; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid #f1f5f9;
+}
+table { width: 100%; border-collapse: collapse; }
+th { 
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    padding: 1.25rem 1rem; text-align: left; font-weight: 700; 
+    color: #374151; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;
+}
+td { padding: 1.25rem 1rem; border-top: 1px solid #f1f5f9; }
+tfoot td { border-top: 2px solid #e5e7eb; }
+
+.status-badge {
+    padding: 0.375rem 0.875rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; 
+}
+.status-success { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+
+.modal {
+    position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; 
+    backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: white; margin: auto; border-radius: 20px; max-width: 90vw; max-height: 90vh; 
+    overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+}
+.modal-header { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { margin: 0; font-weight: 800; font-size: 1.5rem; }
+.close { font-size: 2rem; font-weight: bold; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; }
+.close:hover { opacity: 1; }
+.modal-body { padding: 0 2rem 1.5rem; }
+.modal-footer {
+    padding: 1.5rem 2rem; border-top: 1px solid #e5e7eb; display: flex; gap: 1rem; 
+    justify-content: flex-end;
+}
+
+.form-control {
+    width: 100%; padding: 0.875rem 1rem; border: 2px solid #d1d5db; border-radius: 12px; 
+    font-size: 1rem; transition: all 0.2s ease;
+}
+.form-control:focus {
+    outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.form-control-lg { padding: 1rem 1.25rem; font-size: 1.125rem; }
+
+.btn {
+    padding: 0.75rem 1.5rem; border: none; border-radius: 10px; font-weight: 600; 
+    cursor: pointer; transition: all 0.2s ease; text-decoration: none; 
+    display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+.btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+.btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+.btn-outline-secondary { 
+    background: transparent; color: #6b7280; border: 2px solid #d1d5db; 
+}
+.btn-outline-secondary:hover { background: #f3f4f6; border-color: #9ca3af; }
+
+.messages-container .alert {
+    border: none; border-radius: 12px; margin-bottom: 1rem; padding: 1rem 1.5rem; 
+    display: flex; align-items: center; gap: 0.75rem;
+}
+.close-btn { 
+    margin-left: auto; background: none; border: none; font-size: 1.25rem; 
+    cursor: pointer; opacity: 0.7; 
+}
+.close-btn:hover { opacity: 1; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.stat-card, .table-container, .header-card, .table-tabs { animation: fadeInUp 0.6s ease-out; }
+
+.btn.back a { color: inherit; text-decoration: none; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .table-tabs div { flex-direction: column; }
+    .tab-btn { justify-content: center; }
+    .modal-content { margin: 1rem; max-width: calc(100vw - 2rem); }
+    .header-title { font-size: 1.75rem; }
+}
+</style>
+{% endblock %}

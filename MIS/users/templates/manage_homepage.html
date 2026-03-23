@@ -1,0 +1,64 @@
+{% extends "dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Manage Homepage{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/manage_homepage.css' %}">
+<div class="settings-container">
+    <!-- Back Button -->
+    <div class="settings-header">   
+        <h1>Manage Homepage</h1>
+    </div>
+    
+    <div class="homepage-container">
+
+        <!-- Display Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {% if message.tags %}message-{{ message.tags }}{% endif %}">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% else %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button class="close-message" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+<a href="{% url 'settings' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Settings
+        </a>
+        <!-- Homepage Sections -->
+        <div class="homepage-sections">
+            
+
+            <!-- Homepage Contents Section -->
+            <div class="homepage-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Homepage Contents</h3>
+                        <p>Manage the main content sections of your homepage</p>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="{% url 'edit_hp_contents' %}" class="edit-btn">
+                        <i class="fas fa-edit"></i> Edit Contents
+                    </a>
+                </div>
+            </div>
+
+           
+            
+
+        </div>
+    </div>
+</div>
+{% endblock %}

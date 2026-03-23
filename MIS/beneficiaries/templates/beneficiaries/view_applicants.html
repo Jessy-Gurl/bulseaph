@@ -1,0 +1,322 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block title %}Online Applicants{% endblock %}
+
+<link rel="stylesheet" href="{% static 'css/view_applicants.css' %}">
+
+{% block content %}
+
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        Online Applicants 
+        <span class="badge badge-warning">{{ total_online }}</span>
+    </h1>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<!-- 🔥 APPLICANTS TABLE -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Pending Online Applications</h6>
+    </div>
+    <div class="card-body">
+        {% if applicants %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Contact</th>
+                        <th>Address</th>
+                        <th>Applied</th>
+                        <th>Documents</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for applicant in applicants %}
+                    <tr>
+                        <td>
+                            <strong class="text-primary">{{ applicant.beneficiary_id }}</strong>
+                        </td>
+                        <td>
+                            {{ applicant.first_name }} {{ applicant.last_name }}
+                            <br><small class="text-muted">{{ applicant.category }}</small>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ applicant.email }}" class="text-primary">
+                                {{ applicant.email }}
+                            </a>
+                        </td>
+                        <td>{{ applicant.contact }}</td>
+                        <td>
+                            {{ applicant.barangay.name|default:"—" }}<br>
+                            <small class="text-muted">{{ applicant.street_house }}</small>
+                        </td>
+                        <td>
+                            {{ applicant.applied_at|date:"M d, Y" }}<br>
+                            <small>{{ applicant.applied_at|time:"H:i" }}</small>
+                        </td>
+                        <td>
+                            {% with applicant.documents.count as doc_count %}
+                            <span class="badge badge-info">{{ doc_count }}</span>
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <a href="{% url 'applicant_detail' applicant.id_number %}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-laptop-house fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">No online applications yet</h4>
+            <p class="text-muted">First online applicant will appear here!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<style>
+    /* 🔥 GOVERNMENT STYLE - OFFICIAL DESIGN */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Official Government Background */
+body {
+    background: white;
+    min-height: 100vh;
+}
+
+/* Official Header - White on Blue */
+.d-sm-flex {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 48, 135, 0.3);
+    margin-bottom: 2rem;
+    border-left: 6px solid #003087;
+}
+
+h1 {
+    font-size: 2.3rem !important;
+    font-weight: 700 !important;
+    color: #003087 !important;
+    margin-bottom: 0.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* Official Badge */
+.badge-warning {
+    background-color: #ff6b00 !important;
+    color: white !important;
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 6px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+}
+
+/* Back Button - Official */
+.btn-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62 !important;
+    border-color: #545b62 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Stats Cards - Government Blue */
+.card {
+    background: white !important;
+    border-radius: 8px !important;
+    border: none !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 48, 135, 0.15) !important;
+}
+
+.border-left-primary {
+    border-left: 5px solid #003087 !important;
+}
+
+.border-left-info {
+    border-left: 5px solid #0056b3 !important;
+}
+
+.card-body {
+    padding: 1.5rem !important;
+}
+
+.text-xs.font-weight-bold {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    color: #495057 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.h5 {
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    color: #003087 !important;
+}
+
+/* Main Table - Official */
+.card.shadow.mb-4 {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.card-header {
+    background-color: #003087 !important;
+    color: white !important;
+    border: none !important;
+    padding: 1.25rem 1.75rem !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.card-header h6 {
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Table - WHITE BORDERS */
+.table {
+    margin-bottom: 0 !important;
+    font-size: 0.95rem !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.table th {
+    background-color: #f8f9fa !important;
+    font-weight: 700 !important;
+    color: #495057 !important;
+    border-top: none !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    padding: 1.25rem 1rem !important;
+    text-transform: uppercase !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.5px !important;
+}
+
+.table td {
+    padding: 1.25rem 1rem !important;
+    vertical-align: middle !important;
+    border-color: white !important;
+}
+
+.table tr {
+    border-color: white !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa !important;
+}
+
+.text-primary {
+    color: #003087 !important;
+    font-weight: 700 !important;
+}
+
+.badge-info {
+    background-color: #17a2b8 !important;
+    color: white !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+}
+
+/* View Button - Official */
+.btn-primary {
+    background-color: #003087 !important;
+    border-color: #003087 !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 0.6rem 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 4px rgba(0, 48, 135, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #00205b !important;
+    border-color: #00205b !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 48, 135, 0.4);
+}
+
+/* Empty State */
+.text-center.py-5 {
+    padding: 4rem 2rem !important;
+    color: #6c757d !important;
+}
+
+.text-center.py-5 i {
+    color: #adb5bd !important;
+    opacity: 0.7 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .d-sm-flex {
+        padding: 1.5rem !important;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    h1 {
+        font-size: 1.9rem !important;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem !important;
+    }
+    
+    .table th,
+    .table td {
+        padding: 1rem 0.75rem !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,214 @@
+/* Verify OTP - Simple Elegant Government Style */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', Arial, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: #1f2937;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    max-width: 400px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.header {
+    background: #1e40af;
+    color: #ffffff;
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.025em;
+}
+
+.content {
+    padding: 2rem 1.75rem;
+}
+
+.otp-info {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #0369a1;
+    font-size: 0.9rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.otp-input-wrapper {
+    position: relative;
+    background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.otp-input-wrapper:focus-within {
+    border-color: #1e40af;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    background: #ffffff;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.3em;
+    background: transparent;
+    font-family: 'Courier New', monospace;
+    color: #1e40af;
+    text-transform: uppercase;
+}
+
+.form-group input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.form-group input::placeholder {
+    color: #9ca3af;
+    letter-spacing: normal;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.submit-btn:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.alert {
+    padding: 0.875rem 1rem;
+    margin-bottom: 1.25rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border-left-color: #22c55e;
+}
+
+.alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left-color: #ef4444;
+}
+
+.links {
+    padding: 1.5rem 1.75rem 1.75rem;
+    text-align: center;
+    border-top: 1px solid #f3f4f6;
+    background: #fafbfc;
+}
+
+.links a {
+    color: #1e40af;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 0 1rem;
+    display: inline-block;
+}
+
+.links a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.links a:first-child {
+    margin-left: 0;
+}
+
+/* Countdown Timer (Optional) */
+.timer {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .card {
+        margin: 0.25rem;
+        border-radius: 10px;
+    }
+
+    .content {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .otp-input-wrapper {
+        padding: 0.875rem;
+    }
+
+    .form-group input {
+        font-size: 1.25rem;
+    }
+}

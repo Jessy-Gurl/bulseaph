@@ -1,0 +1,77 @@
+/* =========================
+   SETTINGS PAGE
+========================= */
+
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.settings-container h1 {
+    font-size: 32px;
+    color: #004080;
+    margin-bottom: 30px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.settings-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.settings-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.settings-icon {
+    width: 60px;
+    height: 60px;
+    background: #004080;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.settings-icon i {
+    font-size: 28px;
+    color: white;
+}
+
+.settings-card h3 {
+    font-size: 22px;
+    color: #004080;
+    margin-bottom: 10px;
+}
+
+.settings-card p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.settings-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #004080;
+    text-decoration: none;
+    font-weight: 600;
+    transition: gap 0.3s ease;
+}
+
+.settings-btn:hover {
+    gap: 12px;
+}
+

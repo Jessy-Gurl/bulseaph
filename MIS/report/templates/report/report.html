@@ -1,0 +1,383 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+
+{% block title %}Report Summary{% endblock %}
+
+{% block content %}
+<link href="{% static 'css/report.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="report-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 380px; padding: 20px;">
+            <div style="width: 400px; height: 400px;">
+                <canvas id="cashFlowChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+
+        <!-- Right: Filters & Summary -->
+        <div class="filter-column" style="flex: 0 0 300px; padding: 20px; background: #f8f9fa; border-radius: 12px; height: fit-content;">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-pie"></i> Cash Flow Summary</h3>
+                <div class="chart-summary" id="chartSummary" style="font-size: 1.2em; font-weight: bold; color: #2563eb; margin: 10px 0;">
+                    Loading summary...
+                </div>
+            </div>
+
+            <!-- 🔥 CASCADE FILTERS -->
+            <div style="margin-top: 1.5rem;">
+                <label for="districtFilter"><i class="fas fa-map-marker-alt"></i> District:</label>
+                <select id="districtFilter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+                    <option value="">All Districts</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <label for="municipalityFilter"><i class="fas fa-city"></i> Municipality:</label>
+                <select id="municipalityFilter" disabled style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+                    <option value="">All Municipalities</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <label for="barangayFilter"><i class="fas fa-home"></i> Barangay:</label>
+                <select id="barangayFilter" disabled style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+                    <option value="">All Barangays</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <label><i class="fas fa-calendar"></i> Period:</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap;">
+                    <button class="period-btn active" data-period="weekly" style="flex: 1; min-width: 70px; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer;">Weekly</button>
+                    <button class="period-btn" data-period="monthly" style="flex: 1; min-width: 70px; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer;">Monthly</button>
+                    <button class="period-btn" data-period="6months" style="flex: 1; min-width: 70px; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer;">6 Months</button>
+                    <button class="period-btn" data-period="1year" style="flex: 1; min-width: 70px; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer;">1 Year</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button id="filterBtn" style="width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 10px;">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <button id="exportExcelBtn" style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 10px;">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+                <div class="filter-row">
+                    <!-- 🔥 DATE FILTERS -->
+                    <div class="date-filters" style="display: flex; gap: 12px; padding: 12px 0;">
+                        <input type="date" id="startDate" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; width: 140px;">
+                        <input type="date" id="endDate" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; width: 140px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Stats Below -->
+    <div style="margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div style="text-align: center; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div style="font-size: 2em; color: #ef4444; font-weight: bold;" id="total-loans">₱0</div>
+            <div style="color: #666;">Total Loans (OUT)</div>
+        </div>
+        <div style="text-align: center; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div style="font-size: 2em; color: #10b981; font-weight: bold;" id="total-payments">₱0</div>
+            <div style="color: #666;">Total Payments (IN)</div>
+        </div>
+        <div style="text-align: center; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div style="font-size: 2em; color: #3b82f6; font-weight: bold;" id="net-cashflow">₱0</div>
+            <div style="color: #666;">Net Cashflow</div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('cashFlowChart').getContext('2d');
+    let cashFlowChart;
+    
+    // 🔥 ALL FILTER ELEMENTS
+    const districtFilter = document.getElementById('districtFilter');
+    const municipalityFilter = document.getElementById('municipalityFilter');
+    const barangayFilter = document.getElementById('barangayFilter');
+    const startDateFilter = document.getElementById('startDate');
+    const endDateFilter = document.getElementById('endDate');
+    const filterBtn = document.getElementById('filterBtn');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
+    const periodBtns = document.querySelectorAll('.period-btn');
+    const chartSummary = document.getElementById('chartSummary');
+
+    // 🔥 SET DEFAULT DATE RANGE (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    startDateFilter.value = thirtyDaysAgo.toISOString().split('T')[0];
+    endDateFilter.value = today.toISOString().split('T')[0];
+
+    // 🔥 CASCADE LOAD DISTRICTS
+    fetch('/beneficiaries/api/filters/districts/')
+        .then(r => r.json())
+        .then(districts => {
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district.id;
+                option.textContent = district.name;
+                districtFilter.appendChild(option);
+            });
+            loadData(); // 🔥 Initial load after districts
+        })
+        .catch(() => {
+            // Fallback demo districts
+            ['Metro Manila', 'Cavite', 'Bulacan'].forEach((name, i) => {
+                const option = document.createElement('option');
+                option.value = i + 1;
+                option.textContent = name;
+                districtFilter.appendChild(option);
+            });
+            loadData();
+        });
+
+    // 🔥 CASCADE: District → Municipality
+    districtFilter.addEventListener('change', function() {
+        const districtId = this.value;
+        municipalityFilter.innerHTML = '<option value="">All Municipalities</option>';
+        barangayFilter.innerHTML = '<option value="">All Barangays</option>';
+        municipalityFilter.disabled = !districtId;
+        barangayFilter.disabled = true;
+        
+        if (districtId) {
+            fetch(`/beneficiaries/api/filters/municipalities/?district=${districtId}`)
+                .then(r => r.json())
+                .then(munis => {
+                    munis.forEach(muni => {
+                        const option = document.createElement('option');
+                        option.value = muni.id;
+                        option.textContent = muni.name;
+                        municipalityFilter.appendChild(option);
+                    });
+                })
+                .catch(err => console.error('Municipalities load error:', err));
+        }
+        loadData(); // ✅ Auto-refresh
+    });
+
+    // 🔥 CASCADE: Municipality → Barangay
+    municipalityFilter.addEventListener('change', function() {
+        const muniId = this.value;
+        barangayFilter.innerHTML = '<option value="">All Barangays</option>';
+        barangayFilter.disabled = !muniId;
+        
+        if (muniId) {
+            fetch(`/beneficiaries/api/filters/barangays/?municipality=${muniId}`)
+                .then(r => r.json())
+                .then(brgys => {
+                    brgys.forEach(brgy => {
+                        const option = document.createElement('option');
+                        option.value = brgy.id;
+                        option.textContent = brgy.name;
+                        barangayFilter.appendChild(option);
+                    });
+                })
+                .catch(err => console.error('Barangays load error:', err));
+        }
+        loadData(); // ✅ Auto-refresh
+    });
+
+    // 🔥 PERIOD BUTTONS
+    periodBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            periodBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadData();
+        });
+    });
+
+    // 🔥 MAIN DATA LOADING FUNCTION
+    async function loadData() {
+        console.log('🔥 Loading data with filters:'); // DEBUG
+        
+        if (!validateDates()) return;
+
+        const filters = {
+            district: districtFilter.value || null,
+            municipality: municipalityFilter.value || null,
+            barangay: barangayFilter.value || null,
+            start_date: startDateFilter.value,
+            end_date: endDateFilter.value,
+            period: document.querySelector('.period-btn.active')?.dataset.period || 'monthly'
+        };
+        
+        console.log('📤 Sending filters:', filters); // DEBUG
+        
+        try {
+            const response = await fetch('/report/api/reports/cashflow/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(filters)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log('✅ Data received:', result.summary); // DEBUG
+            updateChart(result.summary);
+            updateStats(result.summary);
+            updateSummary(result.summary);
+        } catch (error) {
+            console.error('❌ Error loading data:', error);
+            loadDemoData();
+        }
+    }
+
+    // 🔥 DATE VALIDATION
+    function validateDates() {
+        const start = new Date(startDateFilter.value);
+        const end = new Date(endDateFilter.value);
+        if (start > end) {
+            alert('❌ Start date must be before end date');
+            return false;
+        }
+        return true;
+    }
+
+    // 🔥 CHART UPDATES
+    function updateChart(summary) {
+        const totalLoans = summary.total_loans || 0;
+        const totalPayments = summary.total_payments || 0;
+        
+        if (cashFlowChart) cashFlowChart.destroy();
+        
+        cashFlowChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Loans (OUT)', 'Payments (IN)'],
+                datasets: [{
+                    data: [totalLoans, totalPayments],
+                    backgroundColor: ['#ef4444', '#10b981'],
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const percent = total ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                return `${ctx.label}: ₱${ctx.parsed.toLocaleString()} (${percent}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateStats(summary) {
+        const totalLoansEl = document.getElementById('total-loans');
+        const totalPaymentsEl = document.getElementById('total-payments');
+        const netCashflowEl = document.getElementById('net-cashflow');
+        
+        totalLoansEl.textContent = `₱${(summary.total_loans || 0).toLocaleString()}`;
+        totalPaymentsEl.textContent = `₱${(summary.total_payments || 0).toLocaleString()}`;
+        
+        const net = summary.net_cashflow || 0;
+        netCashflowEl.textContent = `₱${net.toLocaleString()}`;
+        netCashflowEl.style.color = net >= 0 ? '#10b981' : '#ef4444';
+    }
+
+    function updateSummary(summary) {
+        const loans = summary.total_loans || 0;
+        const payments = summary.total_payments || 0;
+        const net = summary.net_cashflow || 0;
+        chartSummary.innerHTML = `
+            <div>Loans: ₱${loans.toLocaleString()}</div>
+            <div>Payments: ₱${payments.toLocaleString()}</div>
+            <div style="color: ${net >= 0 ? '#10b981' : '#ef4444'}; font-size: 1.3em; font-weight: bold;">
+                Net: ₱${net.toLocaleString()}
+            </div>
+        `;
+    }
+
+    // 🔥 DEMO DATA (fallback)
+    function loadDemoData() {
+        const demoSummary = {
+            total_loans: 375000,
+            total_payments: 290000,
+            net_cashflow: 85000
+        };
+        updateChart(demoSummary);
+        updateStats(demoSummary);
+        updateSummary(demoSummary);
+    }
+
+    // 🔥 CSRF COOKIE HELPER
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 🔥 CLEAN EVENT LISTENERS (NO DUPLICATES)
+    startDateFilter.addEventListener('change', loadData);
+    endDateFilter.addEventListener('change', loadData);
+    barangayFilter.addEventListener('change', loadData);
+    
+    filterBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadData();
+    });
+    
+    exportExcelBtn.addEventListener('click', () => {
+        if (!validateDates()) return;
+        const filters = {
+            district: districtFilter.value || '',
+            municipality: municipalityFilter.value || '',
+            barangay: barangayFilter.value || '',
+            start_date: startDateFilter.value,
+            end_date: endDateFilter.value
+        };
+        const params = new URLSearchParams(filters);
+        window.open(`/report/export/excel/cashflow/?${params}`, '_blank');
+    });
+});
+</script>
+
+<style>
+.filter-column label { 
+    display: block; 
+    font-weight: 600; 
+    margin-bottom: 5px; 
+    color: #374151; 
+}
+.period-btn.active {
+    background: #2563eb !important;
+    color: white !important;
+    border-color: #2563eb !important;
+}
+select:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+}
+</style>
+
+{% endblock %}

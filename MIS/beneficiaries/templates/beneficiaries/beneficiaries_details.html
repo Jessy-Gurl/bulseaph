@@ -1,0 +1,583 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/beneficiaries_details.css' %}">
+<div class="beneficiary-details-container">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <a href="{% url 'beneficiaries' %}" class="back-btn">
+            <i class="icon-arrow-left"></i>
+            Back to List
+        </a>
+    </div>
+
+    <div class="messages-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+    <div class="main-content">
+        <!-- LEFT COLUMN - Profile Card -->
+        <div class="left-column">
+            <!-- MAIN PROFILE CARD -->
+            <div class="profile-card">
+                <!-- HEADER -->
+                <div class="profile-header">
+                    <div class="avatar">{{ beneficiary.first_name.0|upper }}{{ beneficiary.last_name.0|upper }}</div>
+                    <div class="profile-info">
+                        <h1>{{ beneficiary.first_name }} 
+                            {% if beneficiary.middle_name %}{{ beneficiary.middle_name.0 }}. {% endif %}
+                            {{ beneficiary.last_name }}
+                        </h1>
+                        <div class="status-badge 
+                            {% if beneficiary.application_status == 'Approved' %}status-approved{% 
+                            elif beneficiary.application_status == 'Pending' %}status-pending{% 
+                            elif beneficiary.application_status == 'Rejected' %}status-rejected{% 
+                            else %}status-inactive{% endif %}">
+                            {{ beneficiary.application_status }}
+                        </div>
+                        <div class="applied-date">
+                            <i class="icon-calendar"></i>
+                            {% if beneficiary.applied_at %}{{ beneficiary.applied_at|date:"M d, Y | h:i A" }}{% else %}—{% endif %}
+                        </div>
+                        <div class="applied-source">
+                            <i class="icon-source"></i>
+                            {{ beneficiary.get_application_source_display }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-body">
+                    <!-- PERSONAL INFO -->
+                    <section class="info-section">
+                        <h3>Personal Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="label">ID</span>
+                                <code>{{ beneficiary.beneficiary_id }}</code>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Category</span>
+                                <span class="category-tag">{{ beneficiary.get_category_display }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Sex</span>
+                                {{ beneficiary.get_sex_display }}
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Civil Status</span>
+                                {{ beneficiary.get_civil_status_display|default:"—" }}
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Date of Birth</span>
+                                {{ beneficiary.date_of_birth|date:"M d, Y"|default:"—" }}
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Age</span>
+                                {{ beneficiary.age|default:"—" }}
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Project</span>
+                                {{ beneficiary.project|default:"—" }}
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- FAMILY INFO -->
+                    <section class="info-section">
+                        <h3>Family Information</h3>
+                        <div class="info-grid">
+                            {% if beneficiary.spouse_name %}
+                            <div class="info-item full-width">
+                                <span class="label">Spouse</span>
+                                {{ beneficiary.spouse_name }}
+                            </div>
+                            {% endif %}
+                            <div class="info-item">
+                                <span class="label">Dependents</span>
+                                {{ beneficiary.num_of_dependents|default:0 }}
+                                {% if beneficiary.ages_of_dependents %}({{ beneficiary.ages_of_dependents }}){% endif %}
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- CONTACT & ADDRESS -->
+                    <section class="info-section">
+                        <h3>Contact & Address</h3>
+                        <div class="info-grid">
+                            <div class="info-item full-width">
+                                <span class="label">Contact</span>
+                                {{ beneficiary.contact|default:"—" }}
+                            </div>
+                            {% if beneficiary.email %}
+                            <div class="info-item full-width">
+                                <span class="label">Email</span>
+                                <a href="mailto:{{ beneficiary.email }}" style="color: #667eea;">{{ beneficiary.email }}</a>
+                            </div>
+                            {% endif %}
+                            <div class="info-item full-width">
+                                <span class="label">Street Address</span>
+                                {{ beneficiary.street_house|default:"—" }}
+                            </div>
+                            {% if beneficiary.barangay %}
+                            <div class="info-item">
+                                <span class="label">Barangay</span>
+                                {{ beneficiary.barangay.name }}
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.municipality %}
+                            <div class="info-item">
+                                <span class="label">Municipality</span>
+                                {{ beneficiary.municipality.name }}
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.district %}
+                            <div class="info-item">
+                                <span class="label">District</span>
+                                {{ beneficiary.district.name }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <!-- EDUCATION & COMMUNITY -->
+                    <section class="info-section">
+                        <h3>Education & Community</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="label">Education</span>
+                                {{ beneficiary.education_level|default:"—" }}
+                            </div>
+                            {% if beneficiary.is_member_of_org %}
+                            <div class="info-item full-width">
+                                <span class="label">Organization</span>
+                                <span class="org-tag">{{ beneficiary.organization_name|default:"Member" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <!-- BUSINESS -->
+                    {% if beneficiary.business_name or beneficiary.avg_monthly_income %}
+                    <section class="info-section">
+                        <h3>Business & Financial</h3>
+                        <div class="business-grid">
+                            {% if beneficiary.business_name %}
+                            <div class="business-card">
+                                <h4>{{ beneficiary.business_name }}</h4>
+                                <div><strong>Type:</strong> {{ beneficiary.type_of_business|default:"—" }}</div>
+                                <div><strong>Nature:</strong> {{ beneficiary.get_nature_of_business_display|default:"—" }}</div>
+                                <div><strong>Status:</strong> {{ beneficiary.get_business_status_display|default:"—" }}</div>
+                                <div class="business-meta">
+                                    {{ beneficiary.business_address|default:"—" }} 
+                                    | {{ beneficiary.years_in_operation|default:0 }} years
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="financial-card">
+                                <div class="financial-icon"></div>
+                                <div>
+                                    <div class="financial-label">Financial Summary</div>
+                                    <div class="financial-amount">
+                                        ₱{{ beneficiary.net_income|floatformat:2|default:"0.00" }}
+                                    </div>
+                                    <div class="financial-sub">
+                                        Net Income (Monthly)<br>
+                                        <small>
+                                            Income: ₱{{ beneficiary.avg_monthly_income|floatformat:2|default:"0.00" }} 
+                                            | Expenses: ₱{{ beneficiary.avg_monthly_expenses|floatformat:2|default:"0.00" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    <!-- LOAN & ASSETS -->
+                    {% if beneficiary.loan_purpose or beneficiary.owned_assets %}
+                    <section class="info-section">
+                        <h3>Loan & Assets</h3>
+                        <div class="info-grid">
+                            {% if beneficiary.loan_purpose %}
+                            <div class="info-item full-width">
+                                <span class="label">Loan Purpose</span>
+                                <span class="loan-purpose-tag">
+                                    {{ beneficiary.get_loan_purpose_display }}
+                                    {% if beneficiary.loan_purpose == 'Others' and beneficiary.loan_purpose_other %}
+                                    ({{ beneficiary.loan_purpose_other }})
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.owned_assets %}
+                            <div class="info-item full-width">
+                                <span class="label">Owned Assets</span>
+                                <span class="assets-tag">{{ beneficiary.owned_assets }}</span>
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.other_assets %}
+                            <div class="info-item full-width">
+                                <span class="label">Other Assets</span>
+                                {{ beneficiary.other_assets }}
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.outstanding_loans %}
+                            <div class="info-item full-width">
+                                <span class="label">Outstanding Loans</span>
+                                <div class="loan-note">{{ beneficiary.outstanding_loans }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    <!-- PERSONNEL INFO - Visible to Personnel only -->
+                    {% if user.position == 'Personnel' %}
+                    <section class="info-section">
+                        <h3>Approval Information</h3>
+                        <div class="info-grid">
+                            {% if beneficiary.approved_by %}
+                            <div class="info-item">
+                                <span class="label">Approved By</span>
+                                {{ beneficiary.approved_by.get_full_name|default:beneficiary.approved_by.username }}
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.approved_at %}
+                                                        <div class="info-item">
+                                <span class="label">Approved Date</span>
+                                {{ beneficiary.approved_at|date:"M d, Y | h:i A" }}
+                            </div>
+                            {% endif %}
+                            {% if beneficiary.remarks_admin %}
+                            <div class="info-item full-width">
+                                <span class="label">Officer Remarks</span>
+                                <div class="admin-note">{{ beneficiary.remarks_admin }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="info-item">
+                                <span class="label">Renewal Count</span>
+                                {{ beneficiary.renewal_count }}
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Last Updated</span>
+                                {{ beneficiary.updated_at|date:"M d, Y | h:i A" }}
+                            </div>
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    <!-- DOCUMENTS -->
+                    {% if documents %}
+                    <section class="info-section">
+                        <h3>Documents ({{ documents.count }})</h3>
+                        <div class="documents-grid">
+                            {% for doc in documents %}
+                            <div class="document-card">
+                                <div class="document-header">
+                                    <h5>{{ doc.get_doc_type_display }}</h5>
+                                    {% if doc.file %}
+                                    <a href="{{ doc.file.url }}" target="_blank" class="document-link">
+                                        <i class="icon-eye"></i> View
+                                    </a>
+                                    {% else %}
+                                    <span class="document-status">✓ Submitted</span>
+                                    {% endif %}
+                                </div>
+                                {% if doc.note %}
+                                <div class="document-note">{{ doc.note }}</div>
+                                {% endif %}
+                                <div class="document-date">
+                                    <i class="icon-calendar"></i>
+                                    {{ doc.uploaded_at|date:"M d Y | h:i A" }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN - Metrics & Quick Access -->
+        <div class="right-column">
+            <!-- METRICS SECTION -->
+            <div class="metrics-section">
+                <div class="metric-item">
+                    <div class="metric-icon renewal"></div>
+                    <div>
+                        <div class="metric-label">Renewals</div>
+                        <div class="metric-value">{{ beneficiary.renewal_count|default:0 }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="quick-actions">
+                <h4>Quick Actions</h4>
+                <div class="action-list">
+                    <a href="{% url 'update_beneficiary' beneficiary.id_number %}" class="action-item">
+                        <i class="icon-edit"></i> Edit Profile
+                    </a>
+                    <!-- ✅ SHOW ONLY IF Approved/Active -->
+        {% if beneficiary.application_status == 'Approved' or beneficiary.application_status == 'Active' %}
+        <button class="action-item inactive-btn" onclick="openInactiveModal('{{ beneficiary.id_number }}')">
+            <i class="icon-power-off"></i> Mark as Inactive
+        </button>
+        {% endif %}
+        
+        <!-- ✅ SHOW ONLY IF Inactive -->
+        {% if beneficiary.application_status == 'Inactive' %}
+        <button class="action-item active-btn" onclick="openActiveModal('{{ beneficiary.id_number }}')">
+            <i class="icon-power-on"></i> Mark as Active
+        </button>
+        {% endif %}
+                </div>
+            </div>
+
+            <!-- DECLARATION STATUS -->
+            <div class="declaration-section">
+                <h4>Declaration Status</h4>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-indicator {% if beneficiary.declaration_signed %}active{% else %}inactive{% endif %}"></div>
+                        <span>Signed Declaration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVITY - Conditional -->
+            {% if activities %}
+            <div class="activity-section">
+                <h4>Recent Activity</h4>
+                <div class="activity-list">
+                    {% for activity in activities|slice:":5" %}
+                    <div class="activity-item">
+                        <div class="activity-time">{{ activity.created_at|date:"M d Y | h:i A" }}</div>
+                        <div class="activity-action">{{ activity.action }}</div>
+                        {% if activity.details %}
+                        <div class="activity-details">{{ activity.details }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div> <!-- main-content properly closed -->
+</div>
+
+<!-- MARK AS ACTIVE MODAL -->
+<div id="activeModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Mark as Active</h3>
+            <button class="modal-close" onclick="closeActiveModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to mark as active?</p>
+            <div class="beneficiary-name">
+                {{ beneficiary.first_name }} 
+                {% if beneficiary.middle_name %}{{ beneficiary.middle_name.0 }}. {% endif %}
+                {{ beneficiary.last_name }}
+            </div>
+            <div class="modal-form">
+                <label for="activeRemarks">Remarks <span class="required">*</span></label>
+                <textarea id="activeRemarks" rows="4" placeholder="Enter reason for marking as active..." required></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeActiveModal()">Cancel</button>
+            <button class="btn-confirm" id="activeConfirmBtn" onclick="confirmActive()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- MARK AS INACTIVE MODAL -->
+<div id="inactiveModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Mark as Inactive</h3>
+            <button class="modal-close" onclick="closeInactiveModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to mark as inactive?</p>
+            <div class="beneficiary-name">
+                {{ beneficiary.first_name }} 
+                {% if beneficiary.middle_name %}{{ beneficiary.middle_name.0 }}. {% endif %}
+                {{ beneficiary.last_name }}
+            </div>
+            <div class="modal-form">
+                <label for="inactiveRemarks">Remarks <span class="required">*</span></label>
+                <textarea id="inactiveRemarks" rows="4" placeholder="Enter reason for marking as inactive..." required></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeInactiveModal()">Cancel</button>
+            <button class="btn-confirm" onclick="confirmInactive()" id="confirmBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentBeneficiaryId = '';
+
+    // INACTIVE MODAL FUNCTIONS
+    function openInactiveModal(idNumber) {
+        currentBeneficiaryId = idNumber;
+        document.getElementById('inactiveModal').style.display = 'flex';
+        document.getElementById('inactiveRemarks').focus();
+    }
+
+    function closeInactiveModal() {
+        document.getElementById('inactiveModal').style.display = 'none';
+        document.getElementById('inactiveRemarks').value = '';
+        currentBeneficiaryId = '';
+    }
+
+    function confirmInactive() {
+        const remarks = document.getElementById('inactiveRemarks').value.trim();
+        const confirmBtn = document.getElementById('confirmBtn');
+        
+        if (!remarks) {
+            alert('Please enter remarks');
+            document.getElementById('inactiveRemarks').focus();
+            return;
+        }
+
+        // Loading state
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Processing...';
+        confirmBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('remarks', remarks);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            formData.append('csrfmiddlewaretoken', csrfToken.value);
+        }
+
+        fetch(`/beneficiaries/${currentBeneficiaryId}/mark-inactive/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // ✅ NO ALERT - Django messages will show after reload
+                closeInactiveModal();
+                location.reload(); // Django messages appear here
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Connection error. Please try again.');
+        })
+        .finally(() => {
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        });
+    }
+
+    // ACTIVE MODAL FUNCTIONS
+    function openActiveModal(idNumber) {
+        currentBeneficiaryId = idNumber;
+        document.getElementById('activeModal').style.display = 'flex';
+        document.getElementById('activeRemarks').focus();
+    }
+
+    function closeActiveModal() {
+        document.getElementById('activeModal').style.display = 'none';
+        document.getElementById('activeRemarks').value = '';
+        currentBeneficiaryId = '';
+    }
+
+    function confirmActive() {
+        const remarks = document.getElementById('activeRemarks').value.trim();
+        const confirmBtn = document.getElementById('activeConfirmBtn');
+        
+        if (!remarks) {
+            alert('Please enter remarks');
+            document.getElementById('activeRemarks').focus();
+            return;
+        }
+
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Processing...';
+        confirmBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('remarks', remarks);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            formData.append('csrfmiddlewaretoken', csrfToken.value);
+        }
+
+        fetch(`/beneficiaries/${currentBeneficiaryId}/mark-active/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // ✅ NO ALERT - Django messages will show after reload
+                closeActiveModal();
+                location.reload(); // Django messages appear here
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Connection error. Please try again.');
+        })
+        .finally(() => {
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        });
+    }
+
+    // Close modals on outside click
+    document.addEventListener('click', function(event) {
+        const inactiveModal = document.getElementById('inactiveModal');
+        const activeModal = document.getElementById('activeModal');
+        
+        if (event.target === inactiveModal) {
+            closeInactiveModal();
+        }
+        if (event.target === activeModal) {
+            closeActiveModal();
+        }
+    });
+
+    // Other functions
+    function viewFinancial(idNumber) {
+        window.open('/beneficiaries/' + idNumber + '/financial/', '_blank');
+    }
+    
+    function viewDocuments(idNumber) {
+        window.open('/beneficiaries/' + idNumber + '/documents/', '_blank');
+    }
+</script>
+{% endblock %}

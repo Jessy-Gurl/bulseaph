@@ -1,0 +1,906 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Beneficiary</title>
+    <link rel="stylesheet" href="{% static 'css/add_beneficiaries.css' %}">
+</head>
+<body>
+    {% if errors %}
+    <div class="alert alert-danger">
+        <strong>Missing required fields:</strong>
+        {% for error in errors %}{{ error }}{% if not forloop.last %}, {% endif %}{% endfor %}
+    </div>
+{% endif %}
+
+{% if messages %}
+        {% for message in messages %}
+            {% if 'already registered' in message.message %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="card shadow border-0 rounded-4">
+                    <div class="card-header text-white text-center py-4">
+                        <h2 class="mb-0"><i class="fas fa-user-plus me-3"></i>Add New Beneficiary</h2>
+                        <small class="opacity-75">Complete all required fields marked with *</small>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" enctype="multipart/form-data" id="beneficiaryForm">
+                            {% csrf_token %}
+
+                            <!-- A. PERSONAL INFO -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-user me-2"></i> A. Personal Information</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Last Name</label>
+                                        <input type="text" name="last_name" class="form-control" value="{{ post_data.last_name|default:'' }}"  placeholder="Enter last name" maxlength="100" required>
+
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label required">First Name</label>
+                                        <input type="text" name="first_name" class="form-control" placeholder="Enter first name" maxlength="100" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Middle Name</label>
+                                        <input type="text" name="middle_name" class="form-control" placeholder="Enter middle name" maxlength="100">
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Sex</label>
+                                        <select name="sex" class="form-select" required>
+                                            <option value="">Select Sex</option>
+                                            <option value="M">Male</option>
+                                            <option value="F">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Civil Status</label>
+                                        <select name="civil_status" class="form-select" required>
+                                            <option value="">Select Civil Status</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Widowed">Widowed</option>
+                                            <option value="Divorced">Divorced</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Category</label>
+                                        <select name="category" class="form-select" required>
+                                            <option value="">Select Category</option>
+                                            <option value="4ps">4ps</option>
+                                            <option value="Senior">Senior</option>
+                                            <option value="PWD">PWD</option>
+                                            <option value="Solo Parent">Solo Parent</option>
+                                            <option value="Indigent">Indigent</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Project</label>
+                                        <input type="text" name="project" class="form-control" placeholder="Enter project name" maxlength="100" required>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Date of Birth</label>
+                                        <input type="date" name="date_of_birth" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Age</label>
+                                        <input type="number" name="age" class="form-control" min="0" max="120">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Contact</label>
+                                        <input type="text" name="contact" class="form-control" placeholder="Phone/Email" maxlength="150" required>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" name="email" class="form-control" placeholder="example@email.com" maxlength="254">
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+// DATE & AGE VALIDATION - GOVERNMENT FORM
+document.addEventListener('DOMContentLoaded', function() {
+    const dobField = document.querySelector('input[name="date_of_birth"]');
+    const ageField = document.querySelector('input[name="age"]');
+    
+    if (dobField && ageField) {
+        // ✅ TODAY'S DATE
+        const today = new Date();
+        const maxDate = today.toISOString().split('T')[0]; // Can't pick future
+        const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+        
+        // ✅ SET DATE LIMITS (No future dates)
+        dobField.max = maxDate;
+        dobField.min = minDate;
+        
+        // ✅ AUTO-CALC AGE + VALIDATE 21+
+        dobField.addEventListener('change', function() {
+            const dob = new Date(this.value);
+            if (!this.value) return;
+            
+            const age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            const dayDiff = today.getDate() - dob.getDate();
+            
+            let finalAge = age;
+            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                finalAge--;
+            }
+            
+            // ✅ MINIMUM AGE 21
+            if (finalAge < 21) {
+                this.value = '';
+                ageField.value = '';
+                alert('Minimum age is 21 years old');
+                this.focus();
+                return;
+            }
+            
+            ageField.value = finalAge;
+        });
+        
+        // ✅ MANUAL AGE VALIDATION
+        ageField.addEventListener('input', function() {
+            const age = parseInt(this.value);
+            if (age && age < 21) {
+                this.value = '21';
+                alert('Minimum age is 21 years old');
+            }
+            if (age && age > 100) {
+                this.value = '100';
+            }
+        });
+    }
+});
+</script>
+
+                            <!-- B. ADDRESS -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> B. Address</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">District</label>
+                                        <select name="district" id="districtAddress" class="form-select">
+                                            <option value="">All Districts</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Municipality</label>
+                                        <select name="municipality" id="municipalityAddress" class="form-select" disabled>
+                                            <option value="">All Municipalities</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Barangay</label>
+                                        <select name="barangay" id="barangayAddress" class="form-select" disabled>
+                                            <option value="">All Barangays</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required">Street/House</label>
+                                        <input type="text" name="street_house" class="form-control" placeholder="House #, Street name" maxlength="100" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- C. FAMILY -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i> C. Family</h5>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">No. of Dependents</label>
+            <input type="number" name="num_of_dependents" class="form-control" 
+                   min="0" max="20" placeholder="0">
+            <small class="text-muted" id="dependentsHelper">(Need <span id="requiredCount">0</span> ages 0-18, e.g. 1,12,14)</small>
+        </div>
+        <div class="col-md-9">
+            <label class="form-label">Ages of Dependents</label>
+            <input type="text" name="ages_of_dependents" class="form-control ages-input" 
+                   placeholder="1,12,14" maxlength="200">
+            <small class="dependents-status mt-1"></small>
+            <div class="dependents-info mt-1 small text-muted d-none">
+                Ages must be 0-18 years old, comma separated
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 🔥 DEPENDENTS BLOCKER - 1,12,14 SUPPORT + 19+ BLOCK + PERFECT!
+document.addEventListener('DOMContentLoaded', function() {
+    const numField = document.querySelector('input[name="num_of_dependents"]');
+    const agesField = document.querySelector('input[name="ages_of_dependents"]');
+    const statusEl = document.querySelector('.dependents-status');
+    const helperEl = document.getElementById('dependentsHelper');
+    const infoEl = document.querySelector('.dependents-info');
+    const requiredCountEl = document.getElementById('requiredCount');
+    
+    if (!numField || !agesField) return;
+    
+    function getCompleteAges(value) {
+        return value.split(',').map(s => s.trim()).filter(s => s !== '' && /^\d+$/.test(s));
+    }
+    
+    function validateAges(value) {
+        const ages = getCompleteAges(value);
+        return ages.map(ageStr => {
+            const num = parseInt(ageStr);
+            return (num >= 0 && num <= 18 && !isNaN(num)) ? num : null;
+        }).filter(Boolean);
+    }
+    
+    function getCurrentAgePart(value, cursorPos) {
+        const beforeCursor = value.slice(0, cursorPos);
+        const lastComma = beforeCursor.lastIndexOf(',');
+        const currentPart = lastComma >= 0 ? beforeCursor.slice(lastComma + 1).trim() : beforeCursor.trim();
+        return currentPart || '';
+    }
+    
+    function getStatusMessage(required, completeAges, validAges, currentAgePart) {
+        const currentValid = validAges.length;
+        const totalInputs = completeAges.length;
+        
+        if (required === 0) {
+            return totalInputs === 0 ? '✅ No dependents needed' : '⚠️ Clear field';
+        }
+        
+        const currentNum = parseInt(currentAgePart);
+        if (!isNaN(currentNum) && currentNum > 18) {
+            return `❌ Cannot exceed 18!`;
+        }
+        
+        if (currentValid === required && totalInputs === required) {
+            return `✅ Perfect! ${currentValid}/${required} valid ages`;
+        }
+        
+        if (totalInputs >= required) {
+            return `🚫 MAX ${required} AGES REACHED (${currentValid} valid)`;
+        }
+        
+        return `${currentValid}/${required} valid - Need ${required - currentValid} more`;
+    }
+    
+    function updateStatus(message, type = 'muted') {
+        if (statusEl) {
+            statusEl.textContent = message;
+            statusEl.className = `dependents-status mt-1 text-${type} fw-semibold small`;
+        }
+        
+        const required = parseInt(numField.value || 0);
+        const completeAges = getCompleteAges(agesField.value);
+        const validAges = validateAges(agesField.value);
+        const currentAgePart = getCurrentAgePart(agesField.value, agesField.selectionStart);
+        const perfect = validAges.length === required && completeAges.length === required;
+        
+        agesField.style.borderColor = perfect ? '#10b981' : 
+                                     (parseInt(currentAgePart) > 18) ? '#ef4444' : '#f59e0b';
+    }
+    
+    function updateHelper() {
+        const required = parseInt(numField.value || 0);
+        if (requiredCountEl) requiredCountEl.textContent = required;
+        if (helperEl) helperEl.textContent = required === 0 ? '(No ages needed)' : `(Need ${required} ages 0-18, e.g. 1,12,14)`;
+        if (infoEl) infoEl.style.display = required > 0 ? 'block' : 'none';
+    }
+    
+    // 🔥 NUMBER INPUT
+    numField.addEventListener('input', function() {
+        let val = parseInt(this.value);
+        if (val > 20) val = 20;
+        if (val < 0) val = 0;
+        this.value = val;
+        
+        updateHelper();
+        updateStatus(getStatusMessage(val, getCompleteAges(agesField.value), 
+                                     validateAges(agesField.value), 
+                                     getCurrentAgePart(agesField.value, agesField.selectionStart)));
+    });
+    
+    // 🔥 AGES INPUT FEEDBACK
+    agesField.addEventListener('input', function() {
+        const required = parseInt(numField.value || 0);
+        const cursorPos = this.selectionStart;
+        updateStatus(getStatusMessage(required, getCompleteAges(this.value), 
+                                     validateAges(this.value), 
+                                     getCurrentAgePart(this.value, cursorPos)));
+    });
+    
+    // 🔥 MAIN BLOCKING LOGIC
+    agesField.addEventListener('keypress', function(e) {
+        const required = parseInt(numField.value || 0);
+        const cursorPos = this.selectionStart;
+        const currentValue = this.value;
+        const currentAgePart = getCurrentAgePart(currentValue, cursorPos);
+        
+        // BLOCK NON-NUMBERS & NON-COMMAS
+        if (e.key.length === 1 && !/[0-9,]/.test(e.key)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // 🔥 BLOCK 19+ TYPING
+        if (/[0-9]/.test(e.key)) {
+            const newAgePart = currentAgePart + e.key;
+            const newAgeNum = parseInt(newAgePart);
+            
+            if (!isNaN(newAgeNum) && newAgeNum > 18) {
+                e.preventDefault();
+                updateStatus('❌ Cannot type! Max 18 years old', 'danger');
+                agesField.style.animation = 'shake 0.3s';
+                setTimeout(() => agesField.style.animation = '', 300);
+                return;
+            }
+        }
+        
+        // 🔥 BLOCK WHEN MAX AGES REACHED
+        const completeAges = getCompleteAges(currentValue);
+        const validAges = validateAges(currentValue);
+        
+        if (completeAges.length >= required && validAges.length === required && required > 0) {
+            if (e.key === ',' && completeAges.length >= required) {
+                e.preventDefault();
+                updateStatus(`🚫 MAX ${required} AGES REACHED (${validAges.length} valid)`, 'danger');
+                return;
+            }
+        }
+    });
+    
+    // 🔥 PASTE PROTECTION
+    agesField.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const pastedAges = getCompleteAges(paste);
+        const validPasted = validateAges(paste);
+        
+        const required = parseInt(numField.value || 0);
+        if (pastedAges.length > required) {
+            alert(`❌ Cannot paste ${pastedAges.length} ages. Max ${required}!`);
+            return;
+        }
+        
+        if (validPasted.length !== pastedAges.length) {
+            alert('❌ Cannot paste invalid ages! Only 0-18 allowed.');
+            return;
+        }
+        
+        this.value = pastedAges.join(',');
+        updateStatus(getStatusMessage(required, pastedAges, validPasted, ''));
+    });
+    
+    // 🔥 SHAKE ANIMATION
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        input:focus { outline: none; }
+    `;
+    document.head.appendChild(style);
+    
+    updateHelper();
+});
+</script>
+
+                            
+
+                            <!-- D. EDUCATION -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i> D. Education</h5>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label class="form-label">Highest Education Level</label>
+                                        <small class="text-muted">Elementary/High School/Vocational/College/Others</small>
+                                        <select name="education_level" class="form-select">
+                                            <option value="">Select Education Level</option>
+                                            <option value="Elementary">Elementary</option>
+                                            <option value="High School">High School</option>
+                                            <option value="Vocational">Vocational</option>
+                                            <option value="College">College</option>
+                                            <option value="Post Graduate">Post Graduate</option>
+                                            <option value="Others">Others</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- E. LIVELIHOOD/BUSINESS -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i> E. Livelihood/Business</h5>
+    </div>
+    
+    <!-- Business Status Row -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Business Status</label>
+            <select name="business_status" id="businessStatus" class="form-select">
+                <option value="">Select Business Status</option>
+                <option value="existing">Existing Business</option>
+                <option value="starting">Starting Business</option>
+            </select>
+        </div>
+        <div class="col-md-6 starting-only">
+            <label class="form-label">Nature of Business</label>
+            <select name="nature_of_business" class="form-select">
+                <option value="">Select Nature</option>
+                <option value="Retail">Retail</option>
+                <option value="Service">Service</option>
+                <option value="Food">Food</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Existing Business Fields -->
+    <div class="row g-3 mt-3 existing-only" style="display: none;">
+        <div class="col-md-4">
+            <label class="form-label">Type of Business</label>
+            <input type="text" name="type_of_business" class="form-control" placeholder="e.g. Sari-sari store" maxlength="200">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Business Name</label>
+            <input type="text" name="business_name" class="form-control" placeholder="Enter business name" maxlength="200">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Business Address</label>
+            <input type="text" name="business_address" class="form-control" placeholder="Business location" maxlength="255">
+        </div>
+    </div>
+    
+    <div class="row g-3 mt-3 existing-only" style="display: none;">
+        <div class="col-md-4">
+            <label class="form-label">Years in Operation</label>
+            <input type="number" name="years_in_operation" class="form-control" min="0" max="50" placeholder="0">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Avg Monthly Income</label>
+            <div class="input-group">
+                <span class="input-group-text">₱</span>
+                <input type="number" name="avg_monthly_income" class="form-control income-field" step="0.01" min="0" placeholder="0.00">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Avg Monthly Expenses</label>
+            <div class="input-group">
+                <span class="input-group-text">₱</span>
+                <input type="number" name="avg_monthly_expenses" class="form-control expenses-field" step="0.01" min="0" placeholder="0.00">
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-3 mt-3 existing-only" style="display: none;">
+        <div class="col-md-6">
+            <label class="form-label net-income">Net Income (Auto-calculated)</label>
+            <input type="text" class="form-control net-income-input bg-success text-white fw-bold" readonly value="₱0.00">
+        </div>
+    </div>
+</div>
+
+<script>
+// BUSINESS STATUS TOGGLE + NET INCOME
+document.addEventListener('DOMContentLoaded', function() {
+    const businessStatus = document.getElementById('businessStatus');
+    const startingOnly = document.querySelector('.starting-only');
+    const existingOnly = document.querySelectorAll('.existing-only');
+    const incomeField = document.querySelector('.income-field');
+    const expensesField = document.querySelector('.expenses-field');
+    const netIncomeField = document.querySelector('.net-income-input');
+    
+    if (!businessStatus) return;
+    
+    function toggleFields() {
+        const status = businessStatus.value;
+        
+        // ✅ STARTING BUSINESS
+        if (status === 'starting') {
+            startingOnly.style.display = 'block';
+            existingOnly.forEach(el => el.style.display = 'none');
+        } 
+        // ✅ EXISTING BUSINESS
+        else if (status === 'existing') {
+            startingOnly.style.display = 'none';
+            existingOnly.forEach(el => el.style.display = 'block');
+        } 
+        // ✅ NONE
+        else {
+            startingOnly.style.display = 'block';
+            existingOnly.forEach(el => el.style.display = 'none');
+        }
+    }
+    
+    // ✅ NET INCOME CALC (Existing only)
+    function calculateNetIncome() {
+        if (!incomeField || !expensesField || !netIncomeField) return;
+        
+        const income = parseFloat(incomeField.value) || 0;
+        const expenses = parseFloat(expensesField.value) || 0;
+        const net = income - expenses;
+        
+        netIncomeField.value = net > 0 
+            ? `₱${net.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+            : '₱0.00';
+    }
+    
+    // ✅ EVENTS
+    businessStatus.addEventListener('change', toggleFields);
+    
+    if (incomeField && expensesField) {
+        incomeField.addEventListener('input', calculateNetIncome);
+        expensesField.addEventListener('input', calculateNetIncome);
+    }
+    
+    // Initial state
+    toggleFields();
+});
+</script>
+
+                            <!-- F. LOAN -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i> F. Loan</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Loan Purpose</label>
+                                        <select name="loan_purpose" class="form-select" id="loanPurpose">
+                                            <option value="">Select Loan Purpose</option>
+                                            <option value="Business Expansion">Business Expansion</option>
+                                            <option value="Start-up Capital">Start-up Capital</option>
+                                            <option value="Equipment">Equipment</option>
+                                            <option value="Inventory">Inventory</option>
+                                            <option value="Others">Others</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Other Purpose</label>
+                                        <input type="text" name="loan_purpose_other" class="form-control" id="loanPurposeOther">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- G. ASSETS & LIABILITIES -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-coins me-2"></i> G. Assets & Liabilities</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Owned Assets</label>
+                                        <input type="text" name="owned_assets" class="form-control" placeholder="House,Lot,Vehicle" maxlength="255">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Other Assets</label>
+                                        <input type="text" name="other_assets" class="form-control" placeholder="e.g. Jewelry, Appliances" maxlength="255">
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="form-label">Outstanding Loans</label>
+                                    <small class="text-muted">e.g. Sakura Bank - ₱5,000</small>
+                                    <textarea name="outstanding_loans" class="form-control" rows="3" placeholder="Bank name - Amount&#10;e.g. Sakura Bank - ₱5,000&#10;Cooperatives - ₱10,000" maxlength="500"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- H. COMMUNITY INVOLVEMENT -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-handshake me-2"></i> H. Community Involvement</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <div class="form-check pt-2">
+                                            <input type="checkbox" name="is_member_of_org" class="form-check-input" id="isMemberOrg">
+                                            <label class="form-check-label " for="isMemberOrg">Member of Organization?</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label class="form-label">Organization Name</label>
+                                        <input type="text" name="organization_name" class="form-control" placeholder="Enter organization name" maxlength="255">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- I. DOCUMENTS - LIST STYLE -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-file-upload me-2"></i> I. Documents</h5>
+        <small class="text-white-50 d-block mb-3">Check documents received</small>
+    </div>
+    
+    <!-- ✅ LIST OF CHECKBOXES -->
+    <div class="documents-list">
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Liham_kahilingan" class="form-check-input" id="doc1">
+                <label class="form-check-label" for="doc1">
+                    <i class="fas fa-file-alt text-muted me-3"></i>
+                    Liham kahilingan sa Punong Lalawigan
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Cert_barangay_indigency" class="form-check-input" id="doc2">
+                <label class="form-check-label" for="doc2">
+                    <i class="fas fa-file-alt text-muted me-3"></i>
+                    Certificate of Barangay Indigency
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Project_proposal" class="form-check-input" id="doc3">
+                <label class="form-check-label" for="doc3">
+                    <i class="fas fa-file-alt text-muted me-3"></i>
+                    Project Proposal from C/MSWDO
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Repayment_schema" class="form-check-input" id="doc4">
+                <label class="form-check-label" for="doc4">
+                    <i class="fas fa-file-alt text-muted me-3"></i>
+                    Repayment Schema from C/MSWDO
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Marriage_contract" class="form-check-input" id="doc5">
+                <label class="form-check-label" for="doc5">
+                    <i class="fas fa-certificate text-muted me-3"></i>
+                    Marriage Contract
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Birth_certificate" class="form-check-input" id="doc6">
+                <label class="form-check-label" for="doc6">
+                    <i class="fas fa-certificate text-muted me-3"></i>
+                    Birth Certificate
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Valid_ID" class="form-check-input" id="doc7">
+                <label class="form-check-label" for="doc7">
+                    <i class="fas fa-id-card text-muted me-3"></i>
+                    Valid ID
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Community_Tax" class="form-check-input" id="doc8">
+                <label class="form-check-label" for="doc8">
+                    <i class="fas fa-receipt text-muted me-3"></i>
+                    Community Tax Certificate (Cedula)
+                </label>
+            </div>
+        </div>
+        
+        <div class="doc-item">
+            <div class="form-check">
+                <input type="checkbox" name="doc_Training_certificate" class="form-check-input" id="doc9">
+                <label class="form-check-label" for="doc9">
+                    <i class="fas fa-graduation-cap text-muted me-3"></i>
+                    Training Certificate from PCEDO
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+                            <!-- J. DECLARATION & STATUS - AUTO -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-signature me-2"></i> J. Declaration & Status</h5>
+        <small class="text-white-50 d-block mb-3">Auto: Walk-in | Approved</small>
+    </div>
+    
+    <!-- ✅ HIDDEN FIELDS - AUTO SET -->
+    <input type="hidden" name="application_source" value="walkin">
+    <input type="hidden" name="application_status" value="Approved">
+    
+    <!-- ✅ DECLARATION ONLY -->
+    <div class="row">
+        <div class="col-12">
+            <div class="form-check p-4 border rounded-4 bg-light shadow-sm">
+                <input type="checkbox" name="declaration_signed" class="form-check-input" id="declaration" required>
+                <label class="form-check-label fs-5 fw-semibold lh-lg" for="declaration">
+                    <i class="fas fa-check-circle text-success me-3"></i>
+                    <strong>I declare that all information provided are true and correct</strong>
+                    <br><small class="text-muted mt-1">
+                        Application Source: <span class="badge bg-secondary">Walk-in</span> | 
+                        Status: <span class="badge bg-success">Approved</span>
+                    </small>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+                            <!-- ACTION BUTTONS -->
+                            <div class="d-flex gap-3 justify-content-between p-4 border-top">
+                                <a href="{% url 'beneficiaries' %}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                    <i class="fas fa-save me-2"></i>Save Beneficiary
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Address Cascade Dropdowns
+        const districtAddress = document.getElementById('districtAddress');
+        const municipalityAddress = document.getElementById('municipalityAddress');
+        const barangayAddress = document.getElementById('barangayAddress');
+
+        // Load Districts
+        fetch('/beneficiaries/api/filters/districts/')
+            .then(r => r.json())
+            .then(districts => {
+                districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district.id;
+                    option.textContent = district.name;
+                    districtAddress.appendChild(option);
+                });
+            });
+
+        // District → Municipality Cascade
+        districtAddress.addEventListener('change', function() {
+            const districtId = this.value;
+            municipalityAddress.innerHTML = '<option value="">All Municipalities</option>';
+            barangayAddress.innerHTML = '<option value="">All Barangays</option>';
+            municipalityAddress.disabled = !districtId;
+            barangayAddress.disabled = true;
+            
+            if (districtId) {
+                fetch(`/beneficiaries/api/filters/municipalities/?district=${districtId}`)
+                    .then(r => r.json())
+                    .then(municipalities => {
+                        municipalities.forEach(muni => {
+                            const option = document.createElement('option');
+                            option.value = muni.id;
+                            option.textContent = muni.name;
+                            municipalityAddress.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        // Municipality → Barangay Cascade
+        municipalityAddress.addEventListener('change', function() {
+            const muniId = this.value;
+            barangayAddress.innerHTML = '<option value="">All Barangays</option>';
+            barangayAddress.disabled = !muniId;
+            
+            if (muniId) {
+                fetch(`/beneficiaries/api/filters/barangays/?municipality=${muniId}`)
+                    .then(r => r.json())
+                    .then(barangays => {
+                        barangays.forEach(brgy => {
+                            const option = document.createElement('option');
+                            option.value = brgy.id;
+                            option.textContent = brgy.name;
+                            barangayAddress.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-calculate NET INCOME
+            const incomeField = document.querySelector('input[name="avg_monthly_income"]');
+            const expensesField = document.querySelector('input[name="avg_monthly_expenses"]');
+            const netIncomeField = document.querySelector('.net-income-input');
+
+            function calculateNetIncome() {
+                const income = parseFloat(incomeField?.value) || 0;
+                const expenses = parseFloat(expensesField?.value) || 0;
+                const netIncome = income - expenses;
+                netIncomeField.value = netIncome > 0 
+                    ? `₱${netIncome.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                    : '₱0.00';
+            }
+
+            if (incomeField && expensesField && netIncomeField) {
+                [incomeField, expensesField].forEach(field => {
+                    field.addEventListener('input', calculateNetIncome);
+                });
+                calculateNetIncome();
+            }
+
+            // Show/hide loan_purpose_other
+            const loanPurpose = document.getElementById('loanPurpose');
+            const loanPurposeOther = document.getElementById('loanPurposeOther');
+            if (loanPurpose && loanPurposeOther) {
+                function toggleOtherPurpose() {
+                    const parentCol = loanPurposeOther.closest('.col-md-6');
+                    if (parentCol) {
+                        parentCol.style.opacity = loanPurpose.value === 'Others' ? '1' : '0.5';
+                    }
+                    loanPurposeOther.disabled = loanPurpose.value !== 'Others';
+                }
+                loanPurpose.addEventListener('change', toggleOtherPurpose);
+                toggleOtherPurpose();
+            }
+
+            // Age calculation from DOB
+            const dobField = document.querySelector('input[name="date_of_birth"]');
+            const ageField = document.querySelector('input[name="age"]');
+            if (dobField && ageField) {
+                dobField.addEventListener('change', function() {
+                    const dob = new Date(this.value);
+                    if (isNaN(dob.getTime())) return;
+                    const today = new Date();
+                    let age = today.getFullYear() - dob.getFullYear();
+                    const monthDiff = today.getMonth() - dob.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+                    ageField.value = age > 0 ? age : '';
+                });
+            }
+
+            // Form validation & submit
+            const form = document.getElementById('beneficiaryForm');
+            const submitBtn = document.getElementById('submitBtn');
+            form.addEventListener('submit', function(e) {
+                const declaration = document.querySelector('#declaration');
+                if (!declaration?.checked) {
+                    e.preventDefault();
+                    alert('Please check the declaration before submitting.');
+                    declaration.scrollIntoView({ behavior: 'smooth' });
+                    return false;
+                }
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

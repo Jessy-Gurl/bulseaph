@@ -1,0 +1,1161 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Beneficiary Details</title>
+    <link rel="stylesheet" href="{% static 'css/add_beneficiaries.css' %}">
+    <style>
+        .doc-submitted {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+            border: 2px solid #10b981 !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            margin-bottom: 8px !important;
+            transition: all 0.3s ease;
+        }
+        .doc-submitted .form-check-input {
+            background-color: #10b981 !important;
+            border-color: #10b981 !important;
+        }
+        .doc-submitted label {
+            font-weight: 600;
+            color: #065f46 !important;
+        }
+        .documents-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .doc-item {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        .doc-item:hover {
+            border-color: #86b7fe;
+            background-color: #f8f9ff;
+        }
+    </style>
+</head>
+<body>
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'already registered' in message.message %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="card shadow border-0 rounded-4">
+                    <div class="card-header text-white text-center py-4">
+                        <h2 class="mb-0">
+                            <i class="fas fa-user-edit me-3"></i>Update Beneficiary Details
+                        </h2>
+                        <p class="mb-0 opacity-75 mt-2">
+                            ID: <strong>{{ beneficiary.beneficiary_id }}</strong> | 
+                            {{ beneficiary.last_name }}, {{ beneficiary.first_name }}
+                        </p>
+                        <span class="badge status-badge bg-{% if beneficiary.application_status == 'Approved' %}success{% elif beneficiary.application_status == 'Rejected' %}danger{% elif beneficiary.application_status == 'Inactive' %}secondary{% else %}warning{% endif %}">
+                            {{ beneficiary.get_application_status_display }}
+                        </span>
+                        <small class="opacity-75">Update all beneficiary information</small>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" enctype="multipart/form-data" id="beneficiaryForm">
+                            {% csrf_token %}
+
+                            <!-- A. PERSONAL INFO -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-user me-2"></i> A. Personal Information</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Last Name</label>
+                                        {{ form.last_name }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label required">First Name</label>
+                                        {{ form.first_name }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Middle Name</label>
+                                        {{ form.middle_name }}
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Sex</label>
+                                        {{ form.sex }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Civil Status</label>
+                                        {{ form.civil_status }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Category</label>
+                                        {{ form.category }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Project</label>
+                                        {{ form.project }}
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Date of Birth</label>
+                                        {{ form.date_of_birth }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Age</label>
+                                        {{ form.age }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Contact</label>
+                                        {{ form.contact }}
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        {{ form.email }}
+                                    </div>
+                                    
+                                </div>
+                            </div>
+
+                            <!-- B. ADDRESS - FIXED CASCADE -->
+<!-- B. ADDRESS - PRE-POPULATED FROM DATABASE -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> B. Address</h5>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">District</label>
+            <select name="district" id="districtAddress" class="form-select">
+                <option value="">Select District</option>
+                {% for district in districts %}
+                <option value="{{ district.id }}" 
+                        {% if beneficiary.district.id == district.id %}selected{% endif %}>
+                    {{ district.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Municipality</label>
+            <select name="municipality" id="municipalityAddress" class="form-select" 
+                    {% if beneficiary.district %}style="display:block"{% else %}style="display:none"{% endif %}>
+                <option value="">Select Municipality</option>
+                {% for municipality in municipalities %}
+                <option value="{{ municipality.id }}" 
+                        {% if beneficiary.municipality.id == municipality.id %}selected{% endif %}>
+                    {{ municipality.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Barangay</label>
+            <select name="barangay" id="barangayAddress" class="form-select"
+                    {% if beneficiary.municipality %}style="display:block"{% else %}style="display:none"{% endif %}>
+                <option value="">Select Barangay</option>
+                {% for barangay in barangays %}
+                <option value="{{ barangay.id }}" 
+                        {% if beneficiary.barangay.id == barangay.id %}selected{% endif %}>
+                    {{ barangay.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label required">Street/House</label>
+            {{ form.street_house }}
+        </div>
+    </div>
+</div>
+<!-- C. FAMILY - NO SPOUSE, STRICT DEPENDENTS VALIDATION -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i> C. Family</h5>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">No. of Dependents</label>
+            <input type="number" name="num_of_dependents" id="numDependents" 
+                   class="form-control" min="0" max="15" value="{{ form.num_of_dependents.value|default:0 }}" 
+                   placeholder="0">
+            <small class="text-muted">0-15 dependents</small>
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">Ages of Dependents <span id="dependentsHelper" class="text-muted">(e.g. 3,7,12)</span></label>
+            <input type="text" name="ages_of_dependents" id="agesDependents" 
+                   class="form-control ages-input" 
+                   value="{{ form.ages_of_dependents.value|default:'' }}"
+                   placeholder="Enter ages separated by comma" maxlength="100">
+            <small class="dependents-status mt-1" id="dependentsStatus"></small>
+        </div>
+    </div>
+    <div class="alert alert-info mt-3 dependents-info" style="display: none;">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Rules:</strong> Ages must be <strong>0-18 years old</strong>, exactly <span id="requiredCount">0</span> ages, comma-separated (no spaces).
+    </div>
+</div>
+
+<script>
+// 🔥 FIXED: Supports 1,12,14 format + 12 works perfectly + comma input
+document.addEventListener('DOMContentLoaded', function() {
+    const numField = document.getElementById('numDependents');
+    const agesField = document.getElementById('agesDependents');
+    const statusEl = document.getElementById('dependentsStatus');
+    const helperEl = document.getElementById('dependentsHelper');
+    const infoEl = document.querySelector('.dependents-info');
+    const requiredCountEl = document.getElementById('requiredCount');
+    
+    function getCompleteAges(value) {
+        // Split by comma, trim spaces, filter empty/invalid
+        return value.split(',').map(s => s.trim()).filter(s => s !== '' && /^\d+$/.test(s));
+    }
+    
+    function validateAges(value) {
+        const ages = getCompleteAges(value);
+        return ages.map(ageStr => {
+            const num = parseInt(ageStr);
+            return (num >= 0 && num <= 18 && !isNaN(num)) ? num : null;
+        }).filter(Boolean);
+    }
+    
+    function getCurrentAgePart(value, cursorPos) {
+        const beforeCursor = value.slice(0, cursorPos);
+        const lastComma = beforeCursor.lastIndexOf(',');
+        const currentPart = lastComma >= 0 ? beforeCursor.slice(lastComma + 1).trim() : beforeCursor.trim();
+        return currentPart || '';
+    }
+    
+    function getStatusMessage(required, completeAges, validAges, currentAgePart) {
+        const currentValid = validAges.length;
+        const totalInputs = completeAges.length;
+        
+        if (required === 0) {
+            return totalInputs === 0 ? '✅ No dependents needed' : '⚠️ Clear field';
+        }
+        
+        // Current age being typed (only if it's a number)
+        const currentNum = parseInt(currentAgePart);
+        if (!isNaN(currentNum) && currentNum > 18) {
+            return `❌ Cannot exceed 18!`;
+        }
+        
+        if (currentValid === required && totalInputs === required) {
+            return `✅ Perfect! ${currentValid}/${required} valid ages`;
+        }
+        
+        if (totalInputs >= required) {
+            return `🚫 MAX ${required} AGES REACHED (${currentValid} valid)`;
+        }
+        
+        return `${currentValid}/${required} valid - Need ${required - currentValid} more`;
+    }
+    
+    function updateStatus(message, type = 'muted') {
+        statusEl.textContent = message;
+        statusEl.className = `dependents-status mt-1 text-${type} fw-semibold small`;
+        
+        const required = parseInt(numField.value || 0);
+        const completeAges = getCompleteAges(agesField.value);
+        const validAges = validateAges(agesField.value);
+        const currentAgePart = getCurrentAgePart(agesField.value, agesField.selectionStart);
+        const perfect = validAges.length === required && completeAges.length === required;
+        
+        agesField.style.borderColor = perfect ? '#10b981' : 
+                                     (parseInt(currentAgePart) > 18) ? '#ef4444' : '#f59e0b';
+    }
+    
+    function updateHelper() {
+        const required = parseInt(numField.value || 0);
+        requiredCountEl.textContent = required;
+        helperEl.textContent = required === 0 ? '(No ages needed)' : `(Need ${required} ages 0-18, e.g. 1,12,14)`;
+        infoEl.style.display = required > 0 ? 'block' : 'none';
+    }
+    
+    // 🔥 NUMBER INPUT
+    numField.addEventListener('input', function() {
+        let val = parseInt(this.value);
+        if (val > 15) val = 15;
+        if (val < 0) val = 0;
+        this.value = val;
+        
+        updateHelper();
+        updateStatus(getStatusMessage(val, getCompleteAges(agesField.value), 
+                                     validateAges(agesField.value), 
+                                     getCurrentAgePart(agesField.value, agesField.selectionStart)));
+    });
+    
+    // 🔥 AGES INPUT FEEDBACK
+    agesField.addEventListener('input', function() {
+        const required = parseInt(numField.value || 0);
+        const cursorPos = this.selectionStart;
+        updateStatus(getStatusMessage(required, getCompleteAges(this.value), 
+                                     validateAges(this.value), 
+                                     getCurrentAgePart(this.value, cursorPos)));
+    });
+    
+    // 🔥 🔥 MAIN BLOCKING LOGIC - PERFECTLY FIXED 🔥 🔥
+    agesField.addEventListener('keypress', function(e) {
+        const required = parseInt(numField.value || 0);
+        const cursorPos = this.selectionStart;
+        const currentValue = this.value;
+        const currentAgePart = getCurrentAgePart(currentValue, cursorPos);
+        
+        // ✅ ALLOW: numbers (0-9) and comma (,)
+        if (e.key.length === 1 && !/[0-9,]/.test(e.key)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // 🔥 BLOCK 19+ TYPING (intelligently predicts next digit)
+        if (/[0-9]/.test(e.key)) {
+            const newAgePart = currentAgePart + e.key;
+            const newAgeNum = parseInt(newAgePart);
+            
+            // Only block if it would create 19+
+            if (!isNaN(newAgeNum) && newAgeNum > 18) {
+                e.preventDefault();
+                updateStatus('❌ Cannot type! Max 18 years old', 'danger');
+                agesField.style.animation = 'shake 0.3s';
+                setTimeout(() => agesField.style.animation = '', 300);
+                return;
+            }
+        }
+        
+        // 🔥 BLOCK WHEN MAX AGES REACHED (smart comma handling)
+        const completeAges = getCompleteAges(currentValue);
+        const validAges = validateAges(currentValue);
+        
+        // Block new ages only if we already have exactly REQUIRED complete+valid ages
+        if (completeAges.length >= required && validAges.length === required && required > 0) {
+            // Allow editing existing (backspace, delete, numbers within existing fields)
+            // Block only new commas that would create extra fields
+            if (e.key === ',' && completeAges.length >= required) {
+                e.preventDefault();
+                updateStatus(`🚫 MAX ${required} AGES REACHED (${validAges.length} valid)`, 'danger');
+                return;
+            }
+        }
+    });
+    
+    // 🔥 PASTE PROTECTION - FIXED
+    agesField.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const pastedAges = getCompleteAges(paste);
+        const validPasted = validateAges(paste);
+        
+        const required = parseInt(numField.value || 0);
+        if (pastedAges.length > required) {
+            alert(`❌ Cannot paste ${pastedAges.length} ages. Max ${required}!`);
+            return;
+        }
+        
+        if (validPasted.length !== pastedAges.length) {
+            alert('❌ Cannot paste invalid ages! Only 0-18 allowed.');
+            return;
+        }
+        
+        this.value = pastedAges.join(',');
+        updateStatus(getStatusMessage(required, pastedAges, validPasted, ''));
+    });
+    
+    // 🔥 FORM SUBMIT VALIDATION
+    const form = document.getElementById('beneficiaryForm');
+    form.addEventListener('submit', function(e) {
+        const required = parseInt(numField.value || 0);
+        const completeAges = getCompleteAges(agesField.value);
+        const validAges = validateAges(agesField.value);
+        
+        if (required > 0) {
+            if (completeAges.length !== required) {
+                e.preventDefault();
+                alert(`❌ Need exactly ${required} ages\nYou entered ${completeAges.length}`);
+                return false;
+            }
+            if (validAges.length !== required) {
+                e.preventDefault();
+                alert(`❌ All ages must be 0-18 years old!\nValid: ${validAges.length}/${required}`);
+                return false;
+            }
+        }
+    });
+    
+    // 🔥 SHAKE ANIMATION
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        input:focus { outline: none; }
+    `;
+    document.head.appendChild(style);
+    
+    updateHelper();
+});
+</script>
+
+                            <!-- D. EDUCATION -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i> D. Education</h5>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <label class="form-label">Highest Education Level</label>
+            <small class="text-muted">Elementary/High School/Vocational/College/Others</small>
+            <select name="education_level" class="form-select">
+                <option value="" {% if not form.instance.education_level %}selected{% endif %}>Select Education Level</option>
+                <option value="Elementary" {% if form.instance.education_level == "Elementary" %}selected{% endif %}>Elementary</option>
+                <option value="High School" {% if form.instance.education_level == "High School" %}selected{% endif %}>High School</option>
+                <option value="Vocational" {% if form.instance.education_level == "Vocational" %}selected{% endif %}>Vocational</option>
+                <option value="College" {% if form.instance.education_level == "College" %}selected{% endif %}>College</option>
+                <option value="Post Graduate" {% if form.instance.education_level == "Post Graduate" %}selected{% endif %}>Post Graduate</option>
+                <option value="Others" {% if form.instance.education_level == "Others" %}selected{% endif %}>Others</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+                            <!-- E. LIVELIHOOD/BUSINESS -->
+<!-- E. LIVELIHOOD/BUSINESS - PERFECT FOR CREATE & UPDATE -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i> E. Livelihood/Business</h5>
+    </div>
+    
+    <!-- Business Status Row -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Business Status</label>
+            <select name="business_status" id="businessStatus" class="form-select">
+                <option value="">Select Business Status</option>
+                <option value="existing" {% if form.instance.business_status == "existing" %}selected{% endif %}>Existing Business</option>
+                <option value="starting" {% if form.instance.business_status == "starting" %}selected{% endif %}>Starting Business</option>
+            </select>
+        </div>
+        <div class="col-md-6 starting-only">
+            <label class="form-label">Nature of Business</label>
+            <select name="nature_of_business" class="form-select">
+                <option value="">Select Nature</option>
+                <option value="Retail" {% if form.instance.nature_of_business == "Retail" %}selected{% endif %}>Retail</option>
+                <option value="Service" {% if form.instance.nature_of_business == "Service" %}selected{% endif %}>Service</option>
+                <option value="Food" {% if form.instance.nature_of_business == "Food" %}selected{% endif %}>Food</option>
+                <option value="Others" {% if form.instance.nature_of_business == "Others" %}selected{% endif %}>Others</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Existing Business Fields -->
+    <div class="row g-3 mt-3 existing-only" style="display: none;">
+        <div class="col-md-4">
+            <label class="form-label">Type of Business</label>
+            <input type="text" name="type_of_business" class="form-control" 
+                   value="{{ form.instance.type_of_business|default:'' }}" placeholder="e.g. Sari-sari store" maxlength="200">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Business Name</label>
+            <input type="text" name="business_name" class="form-control" 
+                   value="{{ form.instance.business_name|default:'' }}" placeholder="Enter business name" maxlength="200">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Business Address</label>
+            <input type="text" name="business_address" class="form-control" 
+                   value="{{ form.instance.business_address|default:'' }}" placeholder="Business location" maxlength="255">
+        </div>
+    </div>
+    
+    <div class="row g-3 mt-3 existing-only" style="display: none;">
+        <div class="col-md-4">
+            <label class="form-label">Years in Operation</label>
+            <input type="number" name="years_in_operation" class="form-control" 
+                   value="{{ form.instance.years_in_operation|default:0 }}" min="0" max="50" placeholder="0">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Avg Monthly Income</label>
+            <div class="input-group">
+                <span class="input-group-text">₱</span>
+                <input type="number" name="avg_monthly_income" class="form-control income-field" 
+                       value="{{ form.instance.avg_monthly_income|default:'0' }}" step="0.01" min="0" placeholder="0.00">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Avg Monthly Expenses</label>
+            <div class="input-group">
+                <span class="input-group-text">₱</span>
+                <input type="number" name="avg_monthly_expenses" class="form-control expenses-field" 
+                       value="{{ form.instance.avg_monthly_expenses|default:'0' }}" step="0.01" min="0" placeholder="0.00">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Net Income Section -->
+<div class="row g-3 mt-3 existing-only" style="display: none;">
+    <div class="col-md-6">
+        <label class="form-label">Net Income (Auto-calculated)</label>
+        <!-- 🔥 CORRECT FIELD NAME -->
+        <input type="hidden" name="net_income" class="net-income-hidden" value="0">
+        <input type="text" class="form-control net-income-input bg-success text-white fw-bold" readonly value="₱0.00">
+    </div>
+</div>
+
+    <!-- 🔥 DATA BRIDGE - ONLY FOR UPDATE MODE -->
+    {% if form.instance.pk %}
+    <script>
+    window.beneficiaryBusinessData = {
+        status: "{{ form.instance.business_status|default:''|escapejs }}",
+        income: {{ form.instance.avg_monthly_income|default:0|floatformat:2 }},
+        expenses: {{ form.instance.avg_monthly_expenses|default:0|floatformat:2 }},
+        net_income: {{ form.instance.net_monthly_income|default:0|floatformat:2 }}
+    };
+    </script>
+    {% endif %}
+</div>
+
+<script>
+// 🔥 PERFECT CREATE + UPDATE SUPPORT
+document.addEventListener('DOMContentLoaded', function() {
+    const businessStatus = document.getElementById('businessStatus');
+    const startingOnly = document.querySelector('.starting-only');
+    const existingOnly = document.querySelectorAll('.existing-only');
+    const incomeField = document.querySelector('.income-field');
+    const expensesField = document.querySelector('.expenses-field');
+    const netIncomeField = document.querySelector('.net-income-input');
+    const netIncomeHidden = document.querySelector('.net-income-hidden');
+    
+    if (!businessStatus) return;
+    
+    function toggleFields() {
+        const status = businessStatus.value;
+        if (status === 'starting') {
+            if (startingOnly) startingOnly.style.display = 'block';
+            existingOnly.forEach(el => el.style.display = 'none');
+        } else if (status === 'existing') {
+            if (startingOnly) startingOnly.style.display = 'none';
+            existingOnly.forEach(el => el.style.display = 'block');
+        } else {
+            if (startingOnly) startingOnly.style.display = 'block';
+            existingOnly.forEach(el => el.style.display = 'none');
+        }
+    }
+    
+    function calculateNetIncome() {
+        if (!incomeField || !expensesField || !netIncomeField || !netIncomeHidden) return;
+        
+        const income = parseFloat(incomeField.value) || 0;
+        const expenses = parseFloat(expensesField.value) || 0;
+        const net = Math.max(0, income - expenses);
+        
+        // 🔥 UPDATE DISPLAY
+        netIncomeField.value = net >= 0 
+            ? `₱${net.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+            : '₱0.00';
+        
+        // 🔥 UPDATE HIDDEN FIELD (DATABASE)
+        netIncomeHidden.value = net.toFixed(2);
+    }
+    
+    // ✅ EVENTS
+    businessStatus.addEventListener('change', function() {
+        toggleFields();
+        // Recalculate if existing business
+        setTimeout(calculateNetIncome, 50);
+    });
+    
+    if (incomeField && expensesField) {
+        incomeField.addEventListener('input', calculateNetIncome);
+        expensesField.addEventListener('input', calculateNetIncome);
+    }
+    
+    // 🔥 INITIALIZE - UPDATE MODE (SHOW EXISTING VALUES)
+    setTimeout(() => {
+        // Set business status from database (UPDATE only)
+        if (window.beneficiaryBusinessData?.status) {
+            businessStatus.value = window.beneficiaryBusinessData.status;
+        }
+        
+        toggleFields();
+        
+        // 🔥 SHOW EXISTING NET INCOME FIRST, then enable live calc
+        if (window.beneficiaryBusinessData?.net_income && window.beneficiaryBusinessData.net_income > 0) {
+            const existingNet = parseFloat(window.beneficiaryBusinessData.net_income);
+            netIncomeField.value = `₱${existingNet.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            netIncomeHidden.value = existingNet.toFixed(2);
+        } else {
+            calculateNetIncome();
+        }
+    }, 150);
+});
+</script>
+
+                            <!-- F. LOAN - UPDATE VERSION (SHOWS DB VALUES) -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i> F. Loan</h5>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Loan Purpose</label>
+            <select name="loan_purpose" class="form-select" id="loanPurpose">
+                <option value="">Select Loan Purpose</option>
+                <option value="Business Expansion" {% if form.instance.loan_purpose == "Business Expansion" %}selected{% endif %}>Business Expansion</option>
+                <option value="Start-up Capital" {% if form.instance.loan_purpose == "Start-up Capital" %}selected{% endif %}>Start-up Capital</option>
+                <option value="Equipment" {% if form.instance.loan_purpose == "Equipment" %}selected{% endif %}>Equipment</option>
+                <option value="Inventory" {% if form.instance.loan_purpose == "Inventory" %}selected{% endif %}>Inventory</option>
+                <option value="Others" {% if form.instance.loan_purpose == "Others" %}selected{% endif %}>Others</option>
+            </select>
+        </div>
+        <div class="col-md-6 others-only">
+            <label class="form-label">Other Purpose</label>
+            <input type="text" name="loan_purpose_other" class="form-control" 
+                   value="{{ form.instance.loan_purpose_other|default:'' }}" 
+                   id="loanPurposeOther" placeholder="Specify other purpose">
+        </div>
+    </div>
+</div>
+
+<script>
+// 🔥 LOAN PURPOSE TOGGLE (Hide/show Other field)
+document.addEventListener('DOMContentLoaded', function() {
+    const loanPurpose = document.getElementById('loanPurpose');
+    const otherField = document.querySelector('.others-only');
+    
+    if (!loanPurpose || !otherField) return;
+    
+    function toggleOtherField() {
+        const showOther = loanPurpose.value === 'Others';
+        otherField.style.display = showOther ? 'block' : 'none';
+    }
+    
+    // Event
+    loanPurpose.addEventListener('change', toggleOtherField);
+    
+    // Initial state
+    toggleOtherField();
+});
+</script>
+
+                            <!-- G. ASSETS & LIABILITIES - UPDATE VERSION -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-coins me-2"></i> G. Assets & Liabilities</h5>
+    </div>
+    
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Owned Assets</label>
+            <input type="text" name="owned_assets" class="form-control" 
+                   value="{{ form.instance.owned_assets|default:'' }}" 
+                   placeholder="House,Lot,Vehicle" maxlength="255">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Other Assets</label>
+            <input type="text" name="other_assets" class="form-control" 
+                   value="{{ form.instance.other_assets|default:'' }}" 
+                   placeholder="e.g. Jewelry, Appliances" maxlength="255">
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <label class="form-label">Outstanding Loans</label>
+        <small class="text-muted">e.g. Sakura Bank - ₱5,000</small>
+        <textarea name="outstanding_loans" class="form-control" rows="3" 
+                  placeholder="Bank name - Amount&#10;e.g. Sakura Bank - ₱5,000&#10;Cooperatives - ₱10,000" 
+                  maxlength="500">{{ form.instance.outstanding_loans|default:'' }}</textarea>
+    </div>
+</div>
+
+                            <!-- H. COMMUNITY INVOLVEMENT - UPDATE VERSION -->
+<div class="form-section">
+    <div class="section-header">
+        <h5 class="mb-0"><i class="fas fa-handshake me-2"></i> H. Community Involvement</h5>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="form-check pt-2">
+                <input type="checkbox" name="is_member_of_org" class="form-check-input" id="isMemberOrg" 
+                       {% if form.instance.is_member_of_org %}checked{% endif %}>
+                <label class="form-check-label" for="isMemberOrg">Member of Organization?</label>
+            </div>
+        </div>
+        <div class="col-md-9 org-name-field">
+            <label class="form-label">Organization Name</label>
+            <input type="text" name="organization_name" class="form-control" 
+                   value="{{ form.instance.organization_name|default:'' }}" 
+                   placeholder="Enter organization name" maxlength="255">
+        </div>
+    </div>
+</div>
+
+<script>
+// 🔥 TOGGLE ORGANIZATION FIELD
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('isMemberOrg');
+    const orgField = document.querySelector('.org-name-field');
+    
+    if (!checkbox || !orgField) return;
+    
+    function toggleOrgField() {
+        orgField.style.display = checkbox.checked ? 'block' : 'none';
+    }
+    
+    // Event
+    checkbox.addEventListener('change', toggleOrgField);
+    
+    // Initial state (UPDATE - show if checkbox was checked in DB)
+    toggleOrgField();
+});
+</script>
+
+                            <!-- I. DOCUMENTS - ADVANCED VERSION WITH AUTO-CHECK & STATUS -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-file-upload me-2"></i> I. Documents</h5>
+                                    <small class="text-white-50 d-block mb-3">
+                                        Check documents received 
+                                        <span class="badge bg-success">{{ beneficiary.documents.count|default:0 }} already submitted</span>
+                                    </small>
+                                </div>
+                                
+                                <!-- Header -->
+<small class="text-white-50 d-block mb-3">
+    Check documents received 
+    <span class="badge bg-success">{{ beneficiary.documents.count|default:0 }} already submitted</span>
+</small>
+
+<!-- Documents List - COMPLETE 9 DOCUMENTS -->
+<div class="documents-list">
+    <!-- ✅ 1. LIHAM KAHILINGAN -->
+    <div class="doc-item {% if doc_status.Liham_kahilingan %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Liham_kahilingan" class="form-check-input" id="doc1" 
+                   {% if doc_status.Liham_kahilingan %}checked{% endif %}>
+            <label class="form-check-label" for="doc1">
+                <i class="fas fa-file-alt text-muted me-3"></i> Liham kahilingan sa Punong Lalawigan
+                {% if doc_status.Liham_kahilingan %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 2. CERTIFICATE OF INDIGENCY -->
+    <div class="doc-item {% if doc_status.Cert_barangay_indigency %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Cert_barangay_indigency" class="form-check-input" id="doc2" 
+                   {% if doc_status.Cert_barangay_indigency %}checked{% endif %}>
+            <label class="form-check-label" for="doc2">
+                <i class="fas fa-file-alt text-muted me-3"></i> Certificate of Barangay Indigency
+                {% if doc_status.Cert_barangay_indigency %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 3. PROJECT PROPOSAL -->
+    <div class="doc-item {% if doc_status.Project_proposal %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Project_proposal" class="form-check-input" id="doc3" 
+                   {% if doc_status.Project_proposal %}checked{% endif %}>
+            <label class="form-check-label" for="doc3">
+                <i class="fas fa-file-alt text-muted me-3"></i> Project Proposal from C/MSWDO
+                {% if doc_status.Project_proposal %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 4. REPAYMENT SCHEMA -->
+    <div class="doc-item {% if doc_status.Repayment_schema %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Repayment_schema" class="form-check-input" id="doc4" 
+                   {% if doc_status.Repayment_schema %}checked{% endif %}>
+            <label class="form-check-label" for="doc4">
+                <i class="fas fa-file-alt text-muted me-3"></i> Repayment Schema from C/MSWDO
+                {% if doc_status.Repayment_schema %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 5. MARRIAGE CONTRACT -->
+    <div class="doc-item {% if doc_status.Marriage_contract %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Marriage_contract" class="form-check-input" id="doc5" 
+                   {% if doc_status.Marriage_contract %}checked{% endif %}>
+            <label class="form-check-label" for="doc5">
+                <i class="fas fa-certificate text-muted me-3"></i> Marriage Contract
+                {% if doc_status.Marriage_contract %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 6. BIRTH CERTIFICATE -->
+    <div class="doc-item {% if doc_status.Birth_certificate %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Birth_certificate" class="form-check-input" id="doc6" 
+                   {% if doc_status.Birth_certificate %}checked{% endif %}>
+            <label class="form-check-label" for="doc6">
+                <i class="fas fa-certificate text-muted me-3"></i> Birth Certificate
+                {% if doc_status.Birth_certificate %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 7. VALID ID -->
+    <div class="doc-item {% if doc_status.Valid_ID %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Valid_ID" class="form-check-input" id="doc7" 
+                   {% if doc_status.Valid_ID %}checked{% endif %}>
+            <label class="form-check-label" for="doc7">
+                <i class="fas fa-id-card text-muted me-3"></i> Valid ID
+                {% if doc_status.Valid_ID %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 8. COMMUNITY TAX -->
+    <div class="doc-item {% if doc_status.Community_Tax %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Community_Tax" class="form-check-input" id="doc8" 
+                   {% if doc_status.Community_Tax %}checked{% endif %}>
+            <label class="form-check-label" for="doc8">
+                <i class="fas fa-receipt text-muted me-3"></i> Community Tax Certificate (Cedula)
+                {% if doc_status.Community_Tax %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+    
+    <!-- ✅ 9. TRAINING CERTIFICATE -->
+    <div class="doc-item {% if doc_status.Training_certificate %}doc-submitted{% endif %}">
+        <div class="form-check">
+            <input type="checkbox" name="doc_Training_certificate" class="form-check-input" id="doc9" 
+                   {% if doc_status.Training_certificate %}checked{% endif %}>
+            <label class="form-check-label" for="doc9">
+                <i class="fas fa-graduation-cap text-muted me-3"></i> Training Certificate from PCEDO
+                {% if doc_status.Training_certificate %}<span class="badge bg-success ms-2"><i class="fas fa-check"></i> Already Submitted</span>{% endif %}
+            </label>
+        </div>
+    </div>
+</div>
+
+                            <!-- J. STATUS & DECLARATION -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> J. Status & Declaration</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">{{ form.application_status }}</div>
+                                    <div class="col-md-4">{{ form.application_source }}</div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            {{ form.declaration_signed }}
+                                            <label class="form-check-label">{{ form.declaration_signed.label }}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">{{ form.remarks_admin }}</div>
+                            </div>
+
+                            <!-- ACTION BUTTONS -->
+                            <div class="d-flex gap-3 justify-content-between p-4 border-top">
+                                <div>
+                                    <a href="{% url 'beneficiary_details' beneficiary.id_number %}" class="btn btn-outline-secondary btn-lg me-2">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a>
+                                    <a href="{% url 'beneficiaries' %}" class="btn btn-outline-secondary btn-lg">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to List
+                                    </a>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                    <i class="fas fa-save me-2"></i>Update Beneficiary
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DATE & AGE VALIDATION
+            const dobField = document.querySelector('input[name="date_of_birth"]');
+            const ageField = document.querySelector('input[name="age"]');
+            
+            if (dobField && ageField) {
+                const today = new Date();
+                const maxDate = today.toISOString().split('T')[0];
+                const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+                
+                dobField.max = maxDate;
+                dobField.min = minDate;
+                
+                dobField.addEventListener('change', function() {
+                    const dob = new Date(this.value);
+                    if (!this.value) return;
+                    
+                    const age = today.getFullYear() - dob.getFullYear();
+                    const monthDiff = today.getMonth() - dob.getMonth();
+                    const dayDiff = today.getDate() - dob.getDate();
+                    
+                    let finalAge = age;
+                    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                        finalAge--;
+                    }
+                    
+                    if (finalAge < 21) {
+                        this.value = '';
+                        ageField.value = '';
+                        alert('Minimum age is 21 years old');
+                        this.focus();
+                        return;
+                    }
+                    
+                    ageField.value = finalAge;
+                });
+                
+                ageField.addEventListener('input', function() {
+                    const age = parseInt(this.value);
+                    if (age && age < 21) {
+                        this.value = '21';
+                        alert('Minimum age is 21 years old');
+                    }
+                    if (age && age > 100) {
+                        this.value = '100';
+                    }
+                });
+            }
+
+            // FORM SUBMISSION VALIDATION
+            const form = document.getElementById('beneficiaryForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            form.addEventListener('submit', function(e) {
+                const declaration = document.querySelector('input[name="declaration_signed"]');
+                if (declaration && !declaration.checked) {
+                    e.preventDefault();
+                    alert('Please check the declaration before submitting.');
+                    declaration.scrollIntoView({ behavior: 'smooth' });
+                    declaration.focus();
+                    return false;
+                }
+                
+                // Disable submit button and show loading
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+            });
+
+            // DOCUMENT CHECKBOX INTERACTION
+            // DOCUMENT CHECKBOX INTERACTION - PREVENT UNCHECKING SUBMITTED DOCS
+document.querySelectorAll('.form-check-input[name^="doc_"]').forEach(checkbox => {
+    const docItem = checkbox.closest('.doc-item');
+    const isAlreadySubmitted = docItem.classList.contains('doc-submitted');
+    
+    checkbox.addEventListener('change', function(e) {
+        if (isAlreadySubmitted && !this.checked) {
+            // Prevent unchecking already submitted documents
+            e.preventDefault();
+            this.checked = true;
+            alert('This document is already submitted and cannot be unchecked.');
+            return false;
+        }
+        
+        // Update visual state
+        if (this.checked) {
+            docItem.classList.add('doc-submitted');
+        } else {
+            docItem.classList.remove('doc-submitted');
+        }
+    });
+    
+    // Double-check on page load
+    if (checkbox.checked) {
+        docItem.classList.add('doc-submitted');
+    }
+});
+        // Prevent unchecking already submitted documents
+        checkbox.addEventListener('change', function(e) {
+            if (isAlreadySubmitted && !this.checked) {
+                e.preventDefault();
+                this.checked = true;
+                alert('This document is already submitted and cannot be unchecked.');
+                docItem.classList.add('doc-submitted');
+                return false;
+            }
+            
+            // Update visual state for new checks
+            if (this.checked) {
+                docItem.classList.add('doc-submitted');
+            } else {
+                docItem.classList.remove('doc-submitted');
+            }
+        });
+        
+        // Ensure visual state matches checkbox on page load
+        if (checkbox.checked) {
+            docItem.classList.add('doc-submitted');
+        }
+    });
+
+        });
+    </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 🔥 1. AUTO-CALCULATED AGE (IMPROVED)
+    const dobField = document.querySelector('input[name="date_of_birth"]');
+    const ageField = document.querySelector('input[name="age"]');
+    
+    if (dobField && ageField) {
+        const today = new Date();
+        const maxDate = today.toISOString().split('T')[0];
+        const minDate = new Date(today.getFullYear() - 120, 0, 1).toISOString().split('T')[0];
+        
+        dobField.max = maxDate;
+        dobField.min = minDate;
+        
+        function calculateAge(dob) {
+            const age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            const dayDiff = today.getDate() - dob.getDate();
+            return (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+        }
+        
+        dobField.addEventListener('change', function() {
+            if (this.value) {
+                const dob = new Date(this.value + 'T00:00:00');
+                const age = calculateAge(dob);
+                if (age >= 18) {
+                    ageField.value = age;
+                } else {
+                    this.value = '';
+                    ageField.value = '';
+                    alert('Minimum age is 18 years old');
+                }
+            }
+        });
+        
+        ageField.addEventListener('input', function() {
+            const age = parseInt(this.value);
+            if (age && age < 18) this.value = '18';
+            if (age && age > 120) this.value = '120';
+        });
+    }
+
+});
+</script>
+<script>
+// UPDATE FORM - PRE-POPULATE + CASCADE
+document.addEventListener('DOMContentLoaded', function() {
+    const districtAddress = document.getElementById('districtAddress');
+    const municipalityAddress = document.getElementById('municipalityAddress');
+    const barangayAddress = document.getElementById('barangayAddress');
+    
+    // 🔥 CHECK IF ALREADY SELECTED FROM DATABASE
+    const hasDistrict = districtAddress.value;
+    const hasMunicipality = municipalityAddress.value;
+    const hasBarangay = barangayAddress.value;
+    
+    // 🔥 SHOW/HIDE BASED ON EXISTING DATA
+    if (hasDistrict) {
+        municipalityAddress.disabled = false;
+        municipalityAddress.style.display = 'block';
+    }
+    if (hasMunicipality) {
+        barangayAddress.disabled = false;
+        barangayAddress.style.display = 'block';
+    }
+
+    // 🔥 CASCADE FUNCTIONS
+    async function loadMunicipalities(districtId) {
+        municipalityAddress.innerHTML = '<option value="">Loading...</option>';
+        try {
+            const response = await fetch(`/beneficiaries/api/filters/municipalities/?district=${districtId}`);
+            const municipalities = await response.json();
+            municipalityAddress.innerHTML = '<option value="">Select Municipality</option>';
+            municipalities.forEach(muni => {
+                const option = document.createElement('option');
+                option.value = muni.id;
+                option.textContent = muni.name;
+                municipalityAddress.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function loadBarangays(municipalityId) {
+        barangayAddress.innerHTML = '<option value="">Loading...</option>';
+        try {
+            const response = await fetch(`/beneficiaries/api/filters/barangays/?municipality=${municipalityId}`);
+            const barangays = await response.json();
+            barangayAddress.innerHTML = '<option value="">Select Barangay</option>';
+            barangays.forEach(brgy => {
+                const option = document.createElement('option');
+                option.value = brgy.id;
+                option.textContent = brgy.name;
+                barangayAddress.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // 🔥 EVENTS - Only trigger if user changes
+    districtAddress.addEventListener('change', function() {
+        const districtId = this.value;
+        municipalityAddress.innerHTML = '<option value="">Select Municipality</option>';
+        barangayAddress.innerHTML = '<option value="">Select Barangay</option>';
+        
+        municipalityAddress.disabled = !districtId;
+        barangayAddress.disabled = true;
+        municipalityAddress.style.display = districtId ? 'block' : 'none';
+        
+        if (districtId) {
+            loadMunicipalities(districtId);
+        }
+    });
+
+    municipalityAddress.addEventListener('change', function() {
+        const muniId = this.value;
+        barangayAddress.innerHTML = '<option value="">Select Barangay</option>';
+        barangayAddress.disabled = !muniId;
+        barangayAddress.style.display = muniId ? 'block' : 'none';
+        
+        if (muniId) {
+            loadBarangays(muniId);
+        }
+    });
+
+    // 🔥 AGE CALCULATION (keep existing)
+    // ... your existing age script
+
+    console.log('✅ Update form loaded with existing values:', {
+        district: districtAddress.options[districtAddress.selectedIndex]?.text || 'None',
+        municipality: municipalityAddress.options[municipalityAddress.selectedIndex]?.text || 'None',
+        barangay: barangayAddress.options[barangayAddress.selectedIndex]?.text || 'None'
+    });
+});
+</script>
+</body>
+</html>
+{% endblock %}

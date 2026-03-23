@@ -1,0 +1,68 @@
+{% extends "dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<!-- Display Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="message {% if message.tags %}message-{{ message.tags }}{% endif %}">
+            {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle"></i>
+            {% else %}
+                <i class="fas fa-exclamation-circle"></i>
+            {% endif %}
+            {{ message }}
+            <button class="close-message" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<link rel="stylesheet" href="{% static 'css/settings.css' %}">
+<div class="settings-container">
+    <h1>Settings</h1>
+    
+    <div class="settings-grid">
+        <!-- Profile Settings -->
+        <div class="settings-card">
+            <div class="settings-icon">
+                <i class="fas fa-user"></i>
+            </div>
+            <h3>Profile Settings</h3>
+            <p>Update your personal information</p>
+            <a href="{% url 'profile_settings' %}" class="settings-btn">
+                Go to Profile <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="settings-card">
+            <div class="settings-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3>Security Settings</h3>
+            <p>Manage your password</p>
+            <a href="{% url 'security_settings' %}" class="settings-btn">
+                Go to Security <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Manage Homepage (Admin Only) -->
+        {% if user.position == "Admin" %}
+        <div class="settings-card admin-card">
+            <div class="settings-icon">
+                <i class="fas fa-home"></i>
+            </div>
+            <h3>Manage Homepage</h3>
+            <p>Customize the homepage layout</p>
+            <a href="{% url 'manage_homepage' %}" class="settings-btn">
+                Manage Homepage <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,487 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Dashboard{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/dashboard_base.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+    <i class="fas fa-bars hamburger" id="toggleSidebar"></i>
+    <div class="navbar-logo">
+        <img src="{% static 'image/pgb.png' %}" alt="Government Logo" style="height:30px;">
+        <span>Self-Employment Assistance</span>
+    </div>
+    <div class="navbar-right">
+    <i class="fas fa-envelope" id="toggleMessages">
+        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+    </i>
+    <div class="user-welcome">
+        <span>Welcome, {{ user.fullname }}</span>
+        <div class="datetime" id="datetime"></div>
+    </div>
+</div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <ul class="menu">
+        <li>
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <li>
+            <a href="{% url 'beneficiaries' %}">
+                <i class="fas fa-users"></i>
+                <span>Beneficiaries</span>
+            </a>
+        </li>
+
+        <li>
+            <a href="{% url 'report_page' %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Reports</span>
+            </a>
+        </li>
+
+        {% if user.position == "Admin" %}
+        <li>
+            <a href="{% url 'user_management' %}">
+                <i class="fas fa-user-cog"></i>
+                <span>User Management</span>
+            </a>
+        </li>
+        {% endif %}
+
+        <li>
+            <a href="{% url 'user_settings' %}">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </li>
+    </ul>
+    <!-- Logout -->
+    <div class="logout-section">
+        <a href="{% url 'logout' %}" id="logoutBtn" class="confirm-btn">
+            <i class="fas fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</div>
+
+<!-- Message Sidebar -->
+<div class="message-sidebar" id="messageSidebar">
+
+    <div class="message-header">
+        <span>Messages</span>
+        <i class="fas fa-times" id="closeMessageSidebar"></i>
+    </div>
+
+    <!-- USER LIST VIEW -->
+    <div class="message-list-view" id="messageListView">
+
+        <div class="message-search">
+            <input type="text" placeholder="Search users..." id="messageSearch">
+        </div>
+
+        <div class="message-users" id="messageUsers">
+            {% for u in users %}
+                {% if u != request.user %}
+                <div class="user-item" data-userid="{{ u.id }}">
+                    <span class="user-name {% if u.id in unread_user_ids %}unread{% endif %}">{{ u.fullname }}</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- CHAT VIEW (HIDDEN FIRST) -->
+    <div class="chat-view" id="chatView">
+
+        <div class="chat-header">
+            <i class="fas fa-arrow-left" id="backToUsers"></i>
+            <span id="chatUsername"></span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <!-- FILE PREVIEW -->
+        <div class="file-preview" id="filePreview"></div>
+
+        <div class="chat-input">
+    <label for="chatFile" class="attach-btn">
+        <i class="fas fa-paperclip"></i>
+    </label>
+
+    <input type="file" id="chatFile" hidden>
+
+    <input type="text" id="chatInput" placeholder="Type a message...">
+
+    <button id="sendBtn">
+        <i class="fas fa-paper-plane"></i>
+    </button>
+</div>
+
+    </div>
+
+</div>
+
+
+<!-- Main content -->
+<div class="dashboard-content" id="mainContent">
+    {% block content %}
+    <!-- Dashboard content goes here -->
+    {% endblock %}
+</div>
+
+<!-- Notification Sound -->
+<audio id="notificationSound" src="{% static 'audio/notification.mp3' %}" preload="auto"></audio>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // ===== ELEMENTS =====
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    const messageSidebar = document.getElementById("messageSidebar");
+    const toggleMessagesBtn = document.getElementById("toggleMessages");
+    const closeMessagesBtn = document.getElementById("closeMessageSidebar");
+
+    const messageListView = document.getElementById("messageListView");
+    const chatView = document.getElementById("chatView");
+    const backBtn = document.getElementById("backToUsers");
+
+    const chatUsername = document.getElementById("chatUsername");
+    const chatMessages = document.getElementById("chatMessages");
+    const chatInput = document.getElementById("chatInput");
+    const chatFile = document.getElementById("chatFile");
+    const sendBtn = document.getElementById("sendBtn");
+    const filePreview = document.getElementById("filePreview");
+    const notificationBadge = document.getElementById("notificationBadge");
+    const notificationSound = document.getElementById("notificationSound");
+
+    // ===== LOGOUT MODAL ELEMENTS =====
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutModal = document.getElementById('logoutModal');
+    const cancelLogout = document.getElementById('cancelLogout');
+
+    let currentUser = null;
+    let loggedUserId = "{{ user.id }}";
+    let unreadCount = 0;
+    let lastChecked = Date.now();
+    let pollingInterval = null;
+    let previousUnreadCount = 0;
+
+    // ===== CSRF HELPER =====
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    // ===== LEFT SIDEBAR =====
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+        mainContent.classList.toggle('active');
+    });
+
+    // ===== RIGHT MESSAGE SIDEBAR =====
+    toggleMessagesBtn.addEventListener("click", () => {
+        messageSidebar.classList.toggle("active");
+        mainContent.classList.toggle("right-active");
+        if (currentUser) {
+            markMessagesAsRead(currentUser);
+        }
+    });
+
+    closeMessagesBtn.addEventListener("click", () => {
+        messageSidebar.classList.remove("active");
+        mainContent.classList.remove("right-active");
+    });
+
+    // ===== CLICK USER -> OPEN CHAT =====
+    document.querySelectorAll(".user-item").forEach(user => {
+        user.addEventListener("click", () => {
+            currentUser = user.dataset.userid;
+            chatUsername.innerText = user.querySelector(".user-name").innerText;
+
+            messageListView.classList.add("hidden");
+            chatView.classList.add("active");
+
+            loadMessages();
+            markMessagesAsRead(currentUser);
+        });
+    });
+
+    // ===== BACK TO USER LIST =====
+    backBtn.addEventListener("click", () => {
+        chatView.classList.remove("active");
+        messageListView.classList.remove("hidden");
+        chatMessages.innerHTML = "";
+        currentUser = null;
+    });
+
+    // ===== FORMAT TIMESTAMP (DATE + TIME) =====
+    function formatTimestamp(timestampRaw) {
+        const date = new Date(timestampRaw);
+        const dateOptions = { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        };
+        const timeOptions = { 
+            hour: 'numeric', 
+            minute: 'numeric', 
+            hour12: true 
+        };
+        return `${date.toLocaleDateString('en-US', dateOptions)} ${date.toLocaleTimeString('en-US', timeOptions)}`;
+    }
+
+    // ===== LOAD MESSAGES =====
+    function loadMessages() {
+        if (!currentUser) return;
+        fetch(`/messages/${currentUser}/`)
+            .then(res => res.json())
+            .then(data => {
+                chatMessages.innerHTML = "";
+                if(data.messages) {
+                    data.messages.forEach(msg => {
+                        const div = document.createElement("div");
+                        const isSent = msg.sender_id == loggedUserId;
+                        div.classList.add("chat-message", isSent ? "sent" : "received");
+
+                        if (msg.text) div.innerHTML += `<span>${msg.text}</span>`;
+                        if (msg.image) div.innerHTML += `<img src="${msg.image}" class="chat-image" />`;
+                        if (msg.file) div.innerHTML += `<a href="${msg.file}" target="_blank" class="chat-file">📎 Download file</a>`;
+                        
+                        // FIX: Display full date and time
+                        div.innerHTML += `<span class="timestamp">${formatTimestamp(msg.timestamp_raw)}</span>`;
+
+                        chatMessages.appendChild(div);
+                    });
+                }
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            })
+            .catch(err => console.error("Error loading messages:", err));
+    }
+
+    // ===== FILE PREVIEW =====
+    chatFile.addEventListener("change", function() {
+        const file = this.files[0];
+        
+        if (file) {
+            const fileName = document.createElement("div");
+            fileName.classList.add("file-preview-name");
+            fileName.innerText = `📎 ${file.name}`;
+            
+            const imageExt = ['png', 'jpg', 'jpeg', 'gif'];
+            if (imageExt.includes(file.name.split('.').pop().toLowerCase())) {
+                const img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                img.classList.add("file-preview-image");
+                filePreview.appendChild(img);
+            }
+            
+            filePreview.appendChild(fileName);
+            filePreview.classList.add("active");
+        } else {
+            filePreview.innerHTML = "";
+            filePreview.classList.remove("active");
+        }
+    });
+
+    // ===== SEND MESSAGE =====
+    sendBtn.addEventListener("click", () => {
+        if (!currentUser) return;
+
+        const text = chatInput.value.trim();
+        const file = chatFile.files[0];
+
+        if (!text && !file) return;
+
+        const formData = new FormData();
+        formData.append("receiver", currentUser);
+        formData.append("text", text);
+        if (file) formData.append("file", file);
+
+        fetch("/messages/send/", {
+            method: "POST",
+            headers: { "X-CSRFToken": getCSRFToken() },
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
+        .then(msg => {
+            const div = document.createElement("div");
+            div.classList.add("chat-message", "sent");
+
+            if (msg.text) div.innerHTML += `<span>${msg.text}</span>`;
+            if (msg.image) div.innerHTML += `<img src="${msg.image}" class="chat-image" />`;
+            if (msg.file) div.innerHTML += `<a href="${msg.file}" target="_blank" class="chat-file">📎 Download file</a>`;
+            
+            // FIX: Display full date and time
+            div.innerHTML += `<span class="timestamp">${formatTimestamp(msg.timestamp_raw)}</span>`;
+
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            chatInput.value = "";
+            chatFile.value = "";
+            filePreview.innerHTML = "";
+            filePreview.classList.remove("active");
+        })
+        .catch(err => {
+            alert("Failed to send message: " + err.message);
+            console.error("Error sending message:", err);
+        });
+    });
+
+    // ===== MARK MESSAGES AS READ =====
+    function markMessagesAsRead(receiverId) {
+        fetch(`/messages/mark-read/${receiverId}/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": getCSRFToken() }
+        });
+    }
+
+    // ===== CHECK UNREAD COUNT =====
+    function checkUnreadCount() {
+        fetch('/messages/unread-count/')
+            .then(res => res.json())
+            .then(data => {
+                unreadCount = data.unread_count;
+                updateNotificationBadge();
+                updateUserNameBold();
+                
+                // Play sound if new messages arrived
+                if (unreadCount > previousUnreadCount) {
+                    playNotificationSound();
+                }
+                previousUnreadCount = unreadCount;
+            })
+            .catch(err => console.error("Error checking unread count:", err));
+    }
+
+    // ===== UPDATE NOTIFICATION BADGE =====
+    function updateNotificationBadge() {
+        if (unreadCount > 0) {
+            notificationBadge.style.display = 'inline';
+            notificationBadge.innerText = unreadCount;
+        } else {
+            notificationBadge.style.display = 'none';
+        }
+    }
+
+    // ===== UPDATE USER NAME BOLD =====
+    function updateUserNameBold() {
+        document.querySelectorAll(".user-item").forEach(user => {
+            const userId = user.dataset.userid;
+            const nameElement = user.querySelector(".user-name");
+            
+            fetch(`/messages/unread-count/${userId}/`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.unread_count > 0) {
+                        nameElement.classList.add('unread');
+                    } else {
+                        nameElement.classList.remove('unread');
+                    }
+                })
+                .catch(err => console.error("Error checking user unread count:", err));
+        });
+    }
+
+    // ===== PLAY NOTIFICATION SOUND =====
+    function playNotificationSound() {
+        notificationSound.currentTime = 0;
+        notificationSound.play().catch(e => {
+            console.log("Audio play failed (browser may block autoplay):", e);
+        });
+    }
+
+    // ===== POLL FOR NEW MESSAGES =====
+    function startPolling() {
+        pollingInterval = setInterval(() => {
+            checkUnreadCount();
+        }, 5000); // Check every 5 seconds
+    }
+
+    // ===== STOP POLLING =====
+    function stopPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    }
+
+    // ===== START POLLING ON PAGE LOAD =====
+    checkUnreadCount();
+    startPolling();
+
+    // ===== LOGOUT MODAL =====
+    // Show modal when clicking logout
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutModal.style.display = 'flex';
+    });
+
+    // Hide modal when clicking cancel
+    cancelLogout.addEventListener('click', () => {
+        logoutModal.style.display = 'none';
+    });
+
+    // Hide modal when clicking outside the box
+    logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) {
+            logoutModal.style.display = 'none';
+        }
+    });
+
+    // ===== DATE + TIME =====
+    function updateDateTime() {
+        const now = new Date();
+        const dateOptions = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+        const dateStr = now.toLocaleDateString('en-US', dateOptions);
+
+        let hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+
+        const timeStr = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')} ${ampm}`;
+        document.getElementById('datetime').innerText = `${dateStr} ${timeStr}`;
+    }
+
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+});
+</script>
+
+<div class="logout-modal" id="logoutModal">
+    <div class="logout-box">
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to logout?</p>
+
+        <div class="logout-actions">
+            <button class="cancel-btn" id="cancelLogout">Cancel</button>
+            <a href="{% url 'logout' %}" class="confirm-btn">Logout</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

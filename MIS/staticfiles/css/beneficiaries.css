@@ -1,0 +1,214 @@
+/* Beneficiaries Dashboard - Clean Government Style */
+.beneficiaries-page {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+    border-bottom: 3px solid #1e40af;
+}
+
+.page-title {
+    color: #1f2937;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-title::before {
+    content: "👥";
+    font-size: 1.5rem;
+}
+
+.add-btn {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* Tabs */
+.nav-tabs-custom {
+    border: none;
+    margin-bottom: 1.5rem;
+    background: white;
+    border-radius: 12px 12px 0 0;
+    padding: 0 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.nav-tabs-custom .nav-link {
+    border: none;
+    border-radius: 10px 10px 0 0;
+    padding: 1rem 1.5rem;
+    margin-right: 0.25rem;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.025em;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs-custom .nav-link:hover {
+    color: #1e40af;
+    background: #f1f5f9;
+}
+
+.nav-tabs-custom .nav-link.active {
+    color: #1e40af;
+    background: #ffffff;
+    border-bottom: 3px solid #1e40af;
+    box-shadow: 0 -2px 8px rgba(30, 64, 175, 0.1);
+}
+
+/* Cards */
+.beneficiary-card {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.card-header-custom {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.25rem 2rem !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.card-header-custom .btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+}
+
+/* Table */
+.table-custom {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.table-custom th {
+    background: #f8fafc;
+    border-top: none;
+    border-bottom: 2px solid #e5e7eb;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1rem 0.75rem;
+    white-space: nowrap;
+}
+
+.table-custom td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-color: #f3f4f6;
+}
+
+.table-custom tbody tr {
+    transition: background 0.2s ease;
+}
+
+.table-custom tbody tr:hover {
+    background: #f8fafc;
+    transform: scale(1.01);
+}
+
+/* Action Buttons */
+.btn-action {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-action-primary {
+    color: #3b82f6;
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+
+.btn-action-primary:hover {
+    background: #3b82f6;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-action-success {
+    color: #10b981;
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+}
+
+.btn-action-success:hover {
+    background: #10b981;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .card-header-custom {
+        padding: 1rem !important;
+    }
+
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 576px) {
+    .nav-tabs-custom {
+        padding: 0 0.5rem;
+    }
+
+    .nav-tabs-custom .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+}

@@ -1,0 +1,523 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block title %}Applicant {{ applicant.beneficiary_id }}{% endblock %}
+<link rel="stylesheet" href="{% static 'css/ap_details.css' %}">
+{% block content %}
+{% csrf_token %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-1 text-gray-800">{{ applicant.beneficiary_id }}</h1>
+        <p class="mb-0 text-muted">
+            {{ applicant.first_name }} {{ applicant.last_name }} 
+            - {{ applicant.email }} • {{ applicant.applied_at|date:"M d, Y H:i" }}
+        </p>
+    <div class="d-flex gap-3 align-items-center">
+        <a href="{% url 'online_applicants' %}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-arrow-left me-2"></i> Back to List
+        </a>
+        <a href="#" class="btn btn-success btn-lg" onclick="handleApprove('{{ applicant.beneficiary_id }}')">
+            <i class="fas fa-check-circle me-2"></i> Approved
+        </a>
+        <a href="#" class="btn btn-danger btn-lg" onclick="handleReject('{{ applicant.beneficiary_id }}')">
+            <i class="fas fa-times-circle me-2"></i> Rejected
+        </a>
+    </div>
+</div>
+<script>
+function handleApprove(beneficiaryId) {
+    fetch(`/api/applicants/${beneficiaryId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Approved & Email Sent!');
+            window.location.reload();
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    })
+    .catch(e => alert('❌ Error: ' + e));
+}
+
+function handleReject(beneficiaryId) {
+    fetch(`/api/applicants/${beneficiaryId}/reject/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Rejected & Email Sent!');
+            window.location.reload();
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    })
+    .catch(e => alert('❌ Error: ' + e));
+}
+</script>
+</div>
+
+<!-- Profile Tab - COMPLETE FIELDS -->
+<div class="tab-content">
+    <div id="profile" class="tab-pane active">
+        <!-- A. PERSONAL INFO -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-left-primary">
+                    <div class="card-header">
+                        <h6><i class="fas fa-user me-2"></i>A. Personal Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Beneficiary ID:</strong></td><td>{{ applicant.beneficiary_id }}</td></tr>
+                            <tr><td><strong>Last Name:</strong></td><td>{{ applicant.last_name }}</td></tr>
+                            <tr><td><strong>First Name:</strong></td><td>{{ applicant.first_name }}</td></tr>
+                            <tr><td><strong>Middle Name:</strong></td><td>{{ applicant.middle_name|default:"—" }}</td></tr>
+                            <tr><td><strong>Sex:</strong></td><td>{{ applicant.get_sex_display|default:"—" }}</td></tr>
+                            <tr><td><strong>Civil Status:</strong></td><td>{{ applicant.civil_status|default:"—" }}</td></tr>
+                            <tr><td><strong>Category:</strong></td><td><span class="badge badge-info">{{ applicant.category|default:"—" }}</span></td></tr>
+                            <tr><td><strong>Project:</strong></td><td>{{ applicant.project|default:"—" }}</td></tr>
+                            <tr><td><strong>Date of Birth:</strong></td><td>{{ applicant.date_of_birth|date:"M d, Y"|default:"—" }}</td></tr>
+                            <tr><td><strong>Age:</strong></td><td>{{ applicant.age|default:"—" }} years</td></tr>
+                            <tr><td><strong>Contact:</strong></td><td>{{ applicant.contact|default:"—" }}</td></tr>
+                            <tr><td><strong>Email:</strong></td><td>{{ applicant.email|default:"—" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. ADDRESS -->
+            <div class="col-md-6">
+                <div class="card border-left-info">
+                    <div class="card-header">
+                        <h6><i class="fas fa-map-marker-alt me-2"></i>B. Address</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>District:</strong></td><td>{{ applicant.district.name|default:"—" }}</td></tr>
+                            <tr><td><strong>Municipality:</strong></td><td>{{ applicant.municipality.name|default:"—" }}</td></tr>
+                            <tr><td><strong>Barangay:</strong></td><td>{{ applicant.barangay.name|default:"—" }}</td></tr>
+                            <tr><td><strong>Street/House:</strong></td><td>{{ applicant.street_house|default:"—" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- C. FAMILY -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-left-primary">
+                    <div class="card-header">
+                        <h6><i class="fas fa-users me-2"></i>C. Family</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>No. of Dependents:</strong></td><td>{{ applicant.num_of_dependents|default:"0" }}</td></tr>
+                            <tr><td><strong>Ages of Dependents:</strong></td><td>{{ applicant.ages_of_dependents|default:"None" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- D. EDUCATION + E. LIVELIHOOD -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card border-left-info">
+                    <div class="card-header">
+                        <h6><i class="fas fa-graduation-cap me-2"></i>D. Education</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Highest Education Level:</strong></td><td>{{ applicant.education_level|default:"—" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-left-primary">
+                    <div class="card-header">
+                        <h6><i class="fas fa-briefcase me-2"></i>E. Livelihood/Business</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Business Status:</strong></td><td>{{ applicant.business_status|default:"—" }}</td></tr>
+                            {% if applicant.business_status == "existing" %}
+                            <tr><td><strong>Type of Business:</strong></td><td>{{ applicant.type_of_business|default:"—" }}</td></tr>
+                            <tr><td><strong>Business Name:</strong></td><td>{{ applicant.business_name|default:"—" }}</td></tr>
+                            <tr><td><strong>Business Address:</strong></td><td>{{ applicant.business_address|default:"—" }}</td></tr>
+                            <tr><td><strong>Years in Operation:</strong></td><td>{{ applicant.years_in_operation|default:"—" }}</td></tr>
+                            <tr><td><strong>Avg Monthly Income:</strong></td><td>₱{{ applicant.avg_monthly_income|floatformat:2|default:"0.00" }}</td></tr>
+                            <tr><td><strong>Avg Monthly Expenses:</strong></td><td>₱{{ applicant.avg_monthly_expenses|floatformat:2|default:"0.00" }}</td></tr>
+                            {% endif %}
+                            {% if applicant.business_status == "starting" %}
+                            <tr><td><strong>Nature of Business:</strong></td><td>{{ applicant.nature_of_business|default:"—" }}</td></tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- F. LOAN + G. ASSETS -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card border-left-info">
+                    <div class="card-header">
+                        <h6><i class="fas fa-hand-holding-usd me-2"></i>F. Loan</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Loan Purpose:</strong></td><td>{{ applicant.loan_purpose|default:"—" }}{% if applicant.loan_purpose_other %} - {{ applicant.loan_purpose_other }}{% endif %}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-left-primary">
+                    <div class="card-header">
+                        <h6><i class="fas fa-coins me-2"></i>G. Assets & Liabilities</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Owned Assets:</strong></td><td>{{ applicant.owned_assets|default:"None" }}</td></tr>
+                            <tr><td><strong>Other Assets:</strong></td><td>{{ applicant.other_assets|default:"None" }}</td></tr>
+                            <tr><td><strong>Outstanding Loans:</strong></td><td>{{ applicant.outstanding_loans|default:"None" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- H. COMMUNITY + J. DECLARATION -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card border-left-info">
+                    <div class="card-header">
+                        <h6><i class="fas fa-handshake me-2"></i>H. Community Involvement</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Member of Organization:</strong></td><td>{% if applicant.is_member_of_org %}Yes - {{ applicant.organization_name }}{% else %}No{% endif %}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Documents Tab -->
+    <div id="documents" class="tab-pane">
+        {% for doc in documents %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        {% if doc.file.url %}
+                        <img src="{{ doc.file.url }}" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-light p-3 rounded text-center">
+                            <i class="fas fa-file fa-2x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        <h6>{{ doc.get_doc_type_display }}</h6>
+                        <small>{{ doc.file.name|cut:"media/" }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{{ doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            📥 View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No documents uploaded</p>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="col-md-6">
+                <div class="card border-left-primary">
+                    <div class="card-header">
+                        <h6><i class="fas fa-signature me-2"></i>J. Declaration & Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr><td><strong>Application Source:</strong></td><td><span class="badge badge-warning">{{ applicant.application_source|default:"—" }}</span></td></tr>
+                            <tr><td><strong>Application Status:</strong></td><td><span class="badge badge-info">{{ applicant.application_status|default:"—" }}</span></td></tr>
+                            <tr><td><strong>Applied At:</strong></td><td>{{ applicant.applied_at|date:"M d, Y H:i"|default:"—" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+</div>
+
+<script>
+// Simple tabs
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector('.nav-link.active').classList.remove('active');
+        this.classList.add('active');
+        
+        document.querySelector('.tab-pane.active').classList.remove('active');
+        document.querySelector(this.getAttribute('href')).classList.add('active');
+    });
+});
+</script>
+<style>
+    /* 🔥 APPLICANT PROFILE - GOVERNMENT DASHBOARD ENHANCEMENT */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Profile Header */
+.d-sm-flex {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 48, 135, 0.3);
+    margin-bottom: 2rem;
+    border-left: 6px solid #003087;
+}
+
+h1 {
+    font-size: 2.3rem !important;
+    font-weight: 700 !important;
+    color: #003087 !important;
+    margin-bottom: 0.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* Navigation Tabs - Official */
+.nav-tabs {
+    border: none !important;
+    border-radius: 8px !important;
+    background: white !important;
+    padding: 0.5rem !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 2rem !important;
+}
+
+.nav-tabs .nav-link {
+    border: none !important;
+    border-radius: 6px !important;
+    color: #6c757d !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    margin: 0 0.25rem !important;
+    transition: all 0.3s !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-size: 0.9rem !important;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #003087 !important;
+    background: rgba(0, 48, 135, 0.05) !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, #003087, #0056b3) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3) !important;
+}
+
+/* Profile Cards - Enhanced */
+.card {
+    background: white !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease !important;
+    margin-bottom: 1.5rem !important;
+    overflow: hidden !important;
+}
+
+.card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 40px rgba(0, 48, 135, 0.15) !important;
+}
+
+.border-left-primary {
+    border-left: 5px solid #003087 !important;
+}
+
+.border-left-info {
+    border-left: 5px solid #0056b3 !important;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #003087, #0056b3) !important;
+    color: white !important;
+    border: none !important;
+    padding: 1.25rem 1.75rem !important;
+}
+
+.card-header h6 {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Profile Table - Clean & Professional */
+.table {
+    margin-bottom: 0 !important;
+    font-size: 0.95rem !important;
+}
+
+.table-borderless td {
+    padding: 0.75rem 0 !important;
+    border: none !important;
+    vertical-align: top !important;
+}
+
+.table td:first-child {
+    font-weight: 700 !important;
+    color: #495057 !important;
+    width: 40% !important;
+    padding-right: 1rem !important;
+    background: rgba(248, 249, 250, 0.5) !important;
+    border-radius: 4px 0 0 4px !important;
+}
+
+.table td:last-child {
+    color: #212529 !important;
+    font-weight: 500 !important;
+    border-radius: 0 4px 4px 0 !important;
+}
+
+/* Status Badges - Official */
+.badge {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    padding: 0.4em 0.8em !important;
+    border-radius: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3) !important;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #ff6b00, #e55a00) !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3) !important;
+}
+
+/* Buttons - Official */
+.btn {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #003087, #0056b3) !important;
+    border-color: #003087 !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 48, 135, 0.4) !important;
+}
+
+.btn-secondary {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.btn-secondary:hover {
+    background: #545b62 !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Empty State */
+.text-muted {
+    color: #adb5bd !important;
+    font-style: italic !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .d-sm-flex {
+        padding: 1.5rem !important;
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 1rem !important;
+    }
+
+    h1 {
+        font-size: 1.8rem !important;
+    }
+
+    .table td:first-child {
+        width: 45% !important;
+        font-size: 0.9rem !important;
+    }
+
+    .nav-tabs {
+        flex-direction: column !important;
+    }
+
+    .nav-tabs .nav-link {
+        margin: 0.25rem 0 !important;
+    }
+
+    .card-body {
+        padding: 1rem !important;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-pane.active {
+    animation: fadeInUp 0.5s ease-out !important;
+}
+
+/* Icons */
+.card-header i {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-right: 0.75rem !important;
+    width: 20px !important;
+}
+</style>
+{% endblock %}

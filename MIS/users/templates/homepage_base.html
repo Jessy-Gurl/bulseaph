@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PSWDO Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% load static %}{% static 'css/homepage_base.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 🔥 DASHBOARD HEADER -->
+    <header class="dashboard-header">
+        <div class="header-container">
+            <!-- LOGO -->
+            <div class="logo">
+                <img src="{% static 'image/pgb.png' %}" alt="PSWDO Logo" class="logo-img">
+                <span class="logo-text">Self-Employment Assistance</span>
+            </div>
+            <div class="buttons-group">
+            <!-- 🔥 HOME BUTTON -->
+            <a href="{% url 'homepage' %}" class="home-btn" title="Home">
+                <i class="fas fa-home"></i>
+            </a>
+            
+            <!-- ONLINE SERVICES DROPDOWN -->
+            <div class="services-dropdown">
+                <button class="dropdown-btn">
+                    <i class="fas fa-laptop"></i> Online Services
+                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="{% url 'online_application' %}"><i class="fas fa-file-alt"></i> Online Application</a>
+                    
+                </div>
+            </div>
+            
+            <!-- LOGIN PORTAL BUTTON -->
+            <div class="login-portal">
+                <a href="{% url 'login' %}" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login Portal
+                </a>
+            </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    
+        {% block content %}
+        {% endblock %}
+    
+
+    <!-- FOOTER -->
+    <footer class="dashboard-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 PSWDO Self-Employment Assistance. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

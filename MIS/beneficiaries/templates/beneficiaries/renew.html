@@ -1,0 +1,246 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% block title %}Beneficiary Renewal{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 350px;" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- HEADER -->
+            <div class="card shadow border-0 rounded-4 mb-4">
+                <div class="card-header bg-gradient-primary text-white text-center py-5">
+                    <h1 class="mb-2"><i class="fas fa-file-renew me-3"></i>Beneficiary Loan Renewal</h1>
+                    <p class="mb-0 opacity-75">
+                        Beneficiary ID: <strong>{{ beneficiary.beneficiary_id }}</strong> | 
+                        {{ beneficiary.first_name }} {{ beneficiary.last_name }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- RENEWAL FORM -->
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-5">
+                    <form method="POST" id="renewalForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="beneficiary_id" value="{{ beneficiary.beneficiary_id }}">
+
+                        <!-- 1. LOAN AMOUNT -->
+                        <div class="row mb-5">
+                            <div class="col-md-8">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-coins text-warning me-2"></i>
+                                    Loan Amount Requested
+                                </h5>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-warning text-dark fs-5 fw-bold">₱</span>
+                                    <select name="loan_amount" class="form-select form-select-lg" required>
+                                        <option value="">Select Loan Amount</option>
+                                        <option value="2000.00">2,000</option>
+                                        <option value="5000">5,000</option>
+                                        <option value="10000">10,000</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. REQUIRED DOCUMENTS (CHECKBOXES) -->
+                        <div class="documents-section mb-5">
+                            <h5 class="mb-4">
+                                <i class="fas fa-file-contract text-primary me-2"></i>
+                                Required Documents <span class="badge bg-danger ms-2">3 Required</span>
+                            </h5>
+                            
+                            <!-- Checkbox 1 -->
+                            <div class="form-check doc-checkbox mb-4 p-4 border rounded-3 bg-light hover-shadow">
+                                <input class="form-check-input doc-required" type="checkbox" name="doc_Cert_barangay_indigency" id="doc1" required>
+                                <label class="form-check-label h5 mb-0 w-100" for="doc1">
+                                    <div class="d-flex align-items-center">
+                                        <div class="doc-icon bg-warning text-dark rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Certificate of Barangay Indigency</strong>
+                                            <div class="text-muted small">Updated indigency certificate from Barangay</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Checkbox 2 -->
+                            <div class="form-check doc-checkbox mb-4 p-4 border rounded-3 bg-light hover-shadow">
+                                <input class="form-check-input doc-required" type="checkbox" name="doc_Project_proposal" id="doc2" required>
+                                <label class="form-check-label h5 mb-0 w-100" for="doc2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="doc-icon bg-info text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-file-project"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Project Proposal from C/MSWDO</strong>
+                                            <div class="text-muted small">Updated project proposal</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Checkbox 3 -->
+                            <div class="form-check doc-checkbox mb-4 p-4 border rounded-3 bg-light hover-shadow">
+                                <input class="form-check-input doc-required" type="checkbox" name="doc_Training_certificate" id="doc3" required>
+                                <label class="form-check-label h5 mb-0 w-100" for="doc3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="doc-icon bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-graduation-cap"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Training Certificate from PCEDO</strong>
+                                            <div class="text-muted small">Latest training completion certificate</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- DECLARATION -->
+                        <div class="border rounded-4 p-4 bg-light mb-5">
+                            <div class="form-check p-3">
+                                <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
+                                <label class="form-check-label fs-5 fw-semibold lh-lg" for="declaration">
+                                    <i class="fas fa-check-circle text-success me-3"></i>
+                                    I certify that all information and document checkboxes are correct for loan renewal
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- ACTION BUTTONS -->
+                        <div class="d-flex gap-3 justify-content-between p-4 border-top">
+                            <a href="{% url 'beneficiaries' %}" class="btn btn-outline-secondary btn-lg px-5">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Renewal (₱{{ loan_amount|default:"0" }})
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 🔥 CHECKBOX COUNTER + VALIDATION
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.doc-required');
+    const submitBtn = document.getElementById('submitBtn');
+    const loanSelect = document.querySelector('select[name="loan_amount"]');
+    
+    function updateSubmitButton() {
+        const checkedCount = document.querySelectorAll('.doc-required:checked').length;
+        const totalRequired = checkboxes.length;
+        const loanAmount = loanSelect.value;
+        
+        // Update button text
+        const amountText = loanAmount ? new Intl.NumberFormat('en-PH').format(loanAmount) : '0';
+        submitBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i>Submit Renewal (${checkedCount}/${totalRequired})`;
+        submitBtn.disabled = checkedCount !== totalRequired || !loanAmount;
+        
+        // Visual feedback
+        checkboxes.forEach((cb, index) => {
+            const container = cb.closest('.doc-checkbox');
+            if (cb.checked) {
+                container.classList.add('border-success', 'bg-success-subtle');
+            } else {
+                container.classList.remove('border-success', 'bg-success-subtle');
+            }
+        });
+    }
+    
+    // Events
+    checkboxes.forEach(cb => cb.addEventListener('change', updateSubmitButton));
+    loanSelect.addEventListener('change', updateSubmitButton);
+    
+    // Form validation
+    document.getElementById('renewalForm').addEventListener('submit', function(e) {
+        const declaration = document.getElementById('declaration');
+        const checkedCount = document.querySelectorAll('.doc-required:checked').length;
+        
+        if (!declaration.checked) {
+            e.preventDefault();
+            alert('Please check the declaration!');
+            declaration.scrollIntoView();
+            return;
+        }
+        
+        if (checkedCount !== checkboxes.length) {
+            e.preventDefault();
+            alert(`Please check all ${checkboxes.length} required documents!`);
+            return;
+        }
+        
+        // Loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    });
+    
+    // Initial state
+    updateSubmitButton();
+});
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.doc-icon {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.doc-checkbox {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.doc-checkbox:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.doc-checkbox.border-success {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+}
+
+.bg-success-subtle {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.input-group-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .doc-checkbox {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+
+{% endblock %}

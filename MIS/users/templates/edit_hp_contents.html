@@ -1,0 +1,174 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/edit_hp_contents.css' %}">
+<!-- FontAwesome for Professional Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* 🔥 PERFECT SPACING - Matches homepage EXACTLY */
+.content-editor {
+    white-space: pre-wrap !important;  /* ← Multiple spaces + newlines preserved */
+    tab-size: 4;                       /* ← Tabs = 4 spaces */
+    line-height: 1.6;                  /* ← Perfect readability */
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 16px;
+    resize: vertical;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.content-editor:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    outline: none;
+}
+</style>
+
+<div class="edit-container">
+    <!-- Left Column - Editor -->
+    <div class="editor-column">
+        <div class="editor-header">
+            <h1> Edit Homepage Contents <span id="status-indicator" class="status-live"><i class="fas fa-circle"></i> LIVE</span></h1>
+        </div>
+
+        <div class="sections-nav">
+            {% for section in homepage_contents %}
+                <button class="section-tab {% if forloop.first %}active{% endif %}" 
+                        data-section="{{ section.section_name }}">
+                    {{ section.get_section_name_display }}
+                </button>
+            {% endfor %}
+        </div>
+
+        {% for section in homepage_contents %}
+        <div class="section-editor" data-section="{{ section.section_name }}" {% if not forloop.first %}style="display: none;"{% endif %}>
+            <form method="post" enctype="multipart/form-data" class="section-form" id="form-{{ section.section_name }}">
+                {% csrf_token %}
+                <input type="hidden" name="section_name" value="{{ section.section_name }}">
+                
+                <div class="form-group">
+                    <label><i class="fas fa-heading"></i> Title:</label>
+                    <input type="text" name="title" value="{{ section.title }}" required>
+                </div>
+
+                {% if section.section_name == 'mensahe_ng_pinuno' %}
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Image:</label>
+                    {% if section.image %}
+                        <img src="{{ section.image.url }}" alt="Current image" class="current-image">
+                        <br>
+                    {% endif %}
+                    <input type="file" name="image" accept="image/*">
+                    <small>Leave empty to keep current image</small>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Content:</label>
+                    <!-- {{ section.content }} ← Raw text (preserves ALL spacing) -->
+                    <textarea name="content" class="content-editor" rows="15">{{ section.content }}</textarea>
+                    <small><i class="fas fa-paste"></i> <strong>Spacing preserved exactly</strong> | Multiple spaces, tabs, newlines match homepage</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-section-btn"><i class="fas fa-check"></i> Save This Section</button>
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Right Column - Live Preview -->
+    <div class="preview-column">
+        <div class="preview-header">
+            <h2> Live Preview <span id="preview-status" class="status-live"><i class="fas fa-circle"></i> Connected</span></h2>
+            <a href="{% url 'manage_homepage' %}" class="refresh-btn" title="Back to Manage Homepage">
+              <i class="fas fa-arrow-left"></i> Back to Manage Homepage
+            </a>
+        </div>
+        <iframe id="previewFrame" src="/" class="preview-frame" sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
+    </div>
+</div>
+
+<script>
+    // 🔥 PERFECT SPACING PRESERVATION
+    document.querySelectorAll('.content-editor').forEach(textarea => {
+        const resize = () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        };
+        
+        textarea.addEventListener('input', resize);
+        textarea.addEventListener('paste', () => setTimeout(resize, 10));
+        textarea.addEventListener('keyup', resize);
+        resize(); // Initial load
+    });
+
+    function refreshPreview() {
+        const previewFrame = document.getElementById('previewFrame');
+        const timestamp = new Date().getTime();
+        previewFrame.src = '/' + '?t=' + timestamp;
+    }
+
+    // Tab switching
+    document.querySelectorAll('.section-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.section-editor').forEach(e => e.style.display = 'none');
+            this.classList.add('active');
+            document.querySelector(`.section-editor[data-section="${this.dataset.section}"]`).style.display = 'block';
+            refreshPreview();
+        });
+    });
+
+    // Form submit handler
+    document.querySelectorAll('.section-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('.save-section-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            
+            fetch('{% url "update_homepage_content" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Saved & Updated!';
+                    refreshPreview();
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 1200);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                alert('Network error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    });
+
+    document.getElementById('refreshPreviewBtn').addEventListener('click', refreshPreview);
+    window.addEventListener('load', refreshPreview);
+</script>
+{% endblock %}

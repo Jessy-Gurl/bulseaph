@@ -1,0 +1,91 @@
+{% extends "dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Profile Settings{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/profile_settings.css' %}">
+<div class="settings-container">
+    <h1>Profile Settings</h1>
+    
+    <div class="profile-container">
+
+        <!-- Display Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="message {% if message.tags %}message-{{ message.tags }}{% endif %}">
+            {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle"></i>
+            {% else %}
+                <i class="fas fa-exclamation-circle"></i>
+            {% endif %}
+            {{ message }}
+            <button class="close-message" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    {% endfor %}
+{% endif %}
+        <!-- Profile Info Header -->
+        <div class="profile-header">
+            <div class="profile-info">
+                <h2>{{ user.fullname }}</h2>
+                <p>{{ user.id_number }}</p>
+                <span class="user-role">{{ user.position|title }}</span>
+            </div>
+        </div>
+
+        <!-- Profile Form -->
+        <form method="POST" class="profile-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input type="text" id="fullname" name="fullname" value="{{ user.fullname }}" required>
+                </div>
+
+                <!-- ID Number -->
+                <div class="form-group">
+                    <label for="id_number">ID Number</label>
+                    <input type="text" id="id_number" name="id_number" value="{{ user.id_number }}" required>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" value="{{ user.number|default:'' }}">
+                </div>
+
+                <!-- Position (Read-only for non-admins) -->
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <input type="text" id="position" name="position" value="{{ user.position|title }}" readonly>
+                </div>
+
+                <!-- Date Joined -->
+                <div class="form-group">
+                    <label for="date_joined">Date Joined</label>
+                    <input type="text" id="date_joined" name="date_joined" value="{{ user.date_joined|date:'F d, Y' }}" readonly>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{% url 'settings' %}" class="cancel-btn">Cancel</a>
+                <button type="submit" class="save-btn">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
